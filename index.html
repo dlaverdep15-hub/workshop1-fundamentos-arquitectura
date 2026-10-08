@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Workshop 1 de ARTI, Fundamentos de Arquitectura. Conceptualizacion de la evaluacion y el seguimiento de estudiantes: metamodelo, modelo instanciado, punto de vista y vista de consulta.">
+<meta name="author" content="Andres Felipe Garcia Caycedo, David Felipe Laverde Parra, Jose Carlos Salgado Pacheco">
+<link rel="icon" href="logo.png">
+<meta property="og:title" content="Workshop 1 - Seguimiento de estudiantes - ARTI">
+<meta property="og:description" content="Metamodelo, modelo, punto de vista y tablero de seguimiento, con los seis diagramas completos y ampliables.">
+<meta property="og:type" content="website">
+<title>Seguimiento de estudiantes ARTI</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Riel fijo arriba + columna de lectura de 1180px; las figuras salen a sangre
+   dentro de su propia tira con visor ampliable. */
+:root{
+  --tinta:#17203a; --tinta-2:#48536f; --tinta-3:#7b849c;
+  --papel:#f6f7f9; --papel-2:#ffffff; --linea:#dde1e9; --linea-2:#eef0f5;
+  --lapiz:#c0392f;           /* el rojo del lapiz de correccion: la ausencia */
+  --lapiz-sv:#fbefed;
+  --queda:#1f6f5c;           /* lo que si queda registrado */
+  --queda-sv:#eaf4f0;
+  --realce:#eef1f8;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --radio:10px; --sombra:0 1px 2px rgba(23,32,58,.06),0 8px 24px rgba(23,32,58,.06);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --tinta:#e8ebf2; --tinta-2:#a6afc4; --tinta-3:#78819a;
+  --papel:#10141f; --papel-2:#171c2a; --linea:#2a3246; --linea-2:#20273a;
+  --lapiz:#f08a7e; --lapiz-sv:#2d1d1d;
+  --queda:#64c9ad; --queda-sv:#15291f;
+  --realce:#1c2334;
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --tinta:#e8ebf2; --tinta-2:#a6afc4; --tinta-3:#78819a;
+  --papel:#10141f; --papel-2:#171c2a; --linea:#2a3246; --linea-2:#20273a;
+  --lapiz:#f08a7e; --lapiz-sv:#2d1d1d;
+  --queda:#64c9ad; --queda-sv:#15291f;
+  --realce:#1c2334;
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--papel);color:var(--tinta);font-family:var(--sans);
+  font-size:16px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+h1,h2,h3,h4{margin:0;font-weight:500;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+
+/* -------------------------------------------- armazon de la presentacion */
+html,body{height:100%}
+body{overflow:hidden}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;
+  background:var(--papel)}
+.riel{flex:0 0 auto;background:var(--papel-2);border-bottom:1px solid var(--linea);
+  padding-top:env(safe-area-inset-top,0px)}
+.riel-in{max-width:1180px;margin:0 auto;padding:9px 20px;display:flex;
+  align-items:center;gap:12px;flex-wrap:wrap}
+.marca{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;
+  color:var(--tinta-3);text-transform:uppercase;min-width:0;flex:1 1 auto;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.marca b{color:var(--tinta);font-weight:500}
+.marca .sep{opacity:.4;margin:0 7px}
+.marca #aqui{color:var(--lapiz)}
+.utiles{display:flex;align-items:center;gap:8px}
+.voz{font-family:var(--mono);font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--tinta-3);padding:3px 9px;
+  border:1px dashed var(--linea);border-radius:999px;white-space:nowrap}
+.crono{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;
+  padding:4px 9px;border:1px solid var(--linea);border-radius:7px;
+  background:var(--papel);min-width:68px;text-align:center;cursor:pointer}
+.crono.corre{border-color:var(--queda);color:var(--queda)}
+.crono.fin{border-color:var(--lapiz);color:var(--lapiz)}
+.bt{border:1px solid var(--linea);border-radius:7px;padding:4px 10px;
+  font-size:12.5px;background:var(--papel);color:var(--tinta-2)}
+.bt:hover{border-color:var(--tinta-3);color:var(--tinta)}
+.bt[aria-pressed="true"]{background:var(--tinta);color:var(--papel);
+  border-color:var(--tinta)}
+.bt.idx{display:inline-flex;align-items:center;gap:8px;padding-left:8px}
+.bars{display:inline-grid;gap:2.5px;width:13px}
+.bars i{display:block;height:1.6px;background:currentColor;border-radius:2px}
+.bars i:nth-child(2){width:9px} .bars i:nth-child(3){width:11px}
+.barra{height:2px;background:var(--linea-2)}
+.barra span{display:block;height:100%;background:var(--lapiz);width:5%;
+  transition:width .34s cubic-bezier(.3,.8,.3,1)}
+
+.deck{flex:1 1 auto;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;justify-content:safe center;
+  padding-block:20px;scrollbar-width:thin}
+.slide[hidden]{display:none}
+.slide>*{flex:0 0 auto;width:100%}
+.slide.entra{animation:entrada .34s cubic-bezier(.22,.9,.3,1) both}
+.slide.entra.atras{animation-name:entradaAtras}
+@keyframes entrada{from{opacity:0;transform:translateX(26px)}
+  to{opacity:1;transform:none}}
+@keyframes entradaAtras{from{opacity:0;transform:translateX(-26px)}
+  to{opacity:1;transform:none}}
+
+.pie{flex:0 0 auto;background:var(--papel-2);border-top:1px solid var(--linea);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.pie-in{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;
+  align-items:center;gap:14px}
+.nav-bt{display:inline-flex;align-items:center;gap:8px;border:1px solid
+  var(--linea);border-radius:8px;padding:7px 14px;font-size:13.5px;
+  background:var(--papel);color:var(--tinta-2);white-space:nowrap}
+.nav-bt:hover{border-color:var(--tinta-3);color:var(--tinta)}
+.nav-bt.pri{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.nav-bt.pri:hover{opacity:.88}
+.nav-bt[disabled]{opacity:.35;cursor:default}
+.nav-bt .fl{font-size:15px;line-height:1}
+.puntos{flex:1 1 auto;display:flex;gap:4px;justify-content:center;
+  align-items:center;min-width:0;overflow:hidden}
+.puntos button{width:7px;height:7px;border-radius:999px;flex:0 0 auto;
+  background:var(--linea);padding:0}
+.puntos button:hover{background:var(--tinta-3)}
+.puntos button[aria-current="true"]{background:var(--lapiz);width:20px}
+.cuenta{font-family:var(--mono);font-size:12.5px;color:var(--tinta-3);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.cuenta b{color:var(--tinta);font-weight:500;font-size:14px}
+.cuenta span{margin:0 2px}
+@media (max-width:720px){.puntos{display:none}
+  .nav-bt{padding:7px 11px} .voz{display:none}}
+
+/* --------------------------------------------------------------- indice */
+.indice{position:fixed;inset:0;z-index:150;background:var(--papel);
+  display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.indice[hidden]{display:none}
+.indice-cab{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding:16px 20px;border-bottom:1px solid var(--linea);max-width:1180px;
+  margin:0 auto;width:100%}
+.indice-cab b{font-size:15px} .indice-cab .mini{flex:1 1 220px}
+.indice-rej{flex:1;overflow-y:auto;display:grid;gap:10px;padding:20px;
+  max-width:1180px;margin:0 auto;width:100%;align-content:start;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.ix{border:1px solid var(--linea);border-radius:10px;background:var(--papel-2);
+  padding:14px;text-align:left;display:flex;gap:12px;align-items:baseline}
+.ix:hover{border-color:var(--tinta-3)}
+.ix[aria-current="true"]{border-color:var(--lapiz);background:var(--lapiz-sv)}
+.ix em{font-family:var(--mono);font-style:normal;font-size:12px;
+  color:var(--tinta-3);font-variant-numeric:tabular-nums}
+.ix[aria-current="true"] em{color:var(--lapiz)}
+.ix b{font-size:13.5px;font-weight:500;line-height:1.35}
+.ix .q{display:block;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-3);
+  margin-top:5px}
+
+/* ---------------------------------------------------------------- base */
+.col{max-width:1300px;margin:0 auto;padding-inline:24px}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--lapiz);margin-bottom:11px}
+.tit{font-family:var(--display);font-size:clamp(26px,3.4vw,41px);
+  line-height:1.1;letter-spacing:-.015em;max-width:34ch}
+.tit i{font-style:italic;color:var(--tinta-2)}
+.bajada{margin-top:13px;max-width:78ch;color:var(--tinta-2);font-size:15.5px}
+.mini{font-size:13px;color:var(--tinta-3)}
+.mono{font-family:var(--mono);font-size:13px}
+.k{font-family:var(--mono);font-size:12.5px;background:var(--realce);
+  border:1px solid var(--linea);border-radius:5px;padding:1px 5px;
+  white-space:nowrap}
+
+/* ---------------------------------------------------------------- hero */
+.hero-top{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;
+  justify-content:space-between}
+.hero-top img{width:132px}
+.curso{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tinta-3);text-align:right}
+.hero .cuerpo{display:grid;gap:38px;align-items:start;margin-top:26px;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+@media (max-width:900px){.hero .cuerpo{grid-template-columns:1fr;gap:26px}}
+.hero h1{font-family:var(--display);font-size:clamp(33px,4.6vw,56px);
+  line-height:1.05;letter-spacing:-.025em;max-width:15ch}
+.hero h1 i{font-style:italic;color:var(--lapiz)}
+.hero-sub{margin-top:18px;max-width:52ch;font-size:16px;color:var(--tinta-2)}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  border-radius:var(--radio);overflow:hidden;
+  grid-template-columns:repeat(2,minmax(0,1fr))}
+.cifra{background:var(--papel-2);padding:15px 17px}
+.cifra b{display:block;font-family:var(--display);font-size:34px;
+  line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cifra span{display:block;margin-top:7px;font-size:12.5px;color:var(--tinta-3);
+  line-height:1.45}
+.ficha-curso{margin-top:20px;display:grid;gap:16px 24px;
+  grid-template-columns:repeat(2,minmax(0,1fr))}
+.ficha-curso h4{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--tinta-3);margin-bottom:8px}
+.ficha-curso li{font-size:13.5px;padding:1px 0;line-height:1.45}
+.cta{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cta .ir{background:var(--tinta);color:var(--papel);
+  padding:11px 20px;border-radius:8px;font-size:14.5px}
+.cta .ir:hover{opacity:.88}
+.cta .ir.sec{background:transparent;color:var(--tinta);
+  border:1px solid var(--linea)}
+.cta .ir.sec:hover{border-color:var(--tinta-3);opacity:1}
+
+/* ningun panel empuja la diapositiva: se desplaza por dentro */
+.slide .panel-cuerpo .bloque{max-height:27vh;overflow-y:auto;
+  scrollbar-width:thin}
+.slide .caja ul{max-height:32vh;overflow-y:auto;scrollbar-width:thin}
+.slide .sims{max-height:30vh;overflow-y:auto;padding-right:4px;
+  scrollbar-width:thin}
+.slide .filas{max-height:50vh;overflow-y:auto;scrollbar-width:thin}
+.slide#accionables .filas,.slide#supuestos .filas{max-height:none}
+.slide#accionables .fila,.slide#supuestos .fila{padding:9px 16px;
+  align-items:center}
+.slide .mx-env{max-height:44vh}
+
+/* cabecera de diapositiva: titulo a la izquierda, pestanas a la derecha */
+.cab{display:flex;align-items:flex-end;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.pest{display:inline-flex;border:1px solid var(--linea);border-radius:9px;
+  background:var(--papel-2);padding:3px;gap:3px;flex-wrap:wrap}
+.pest button{padding:6px 14px;border-radius:7px;font-size:13px;
+  color:var(--tinta-2);white-space:nowrap}
+.pest button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+.rotulo{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--tinta-3);margin-bottom:11px}
+
+/* la figura completa, pequena pero sin recortar, con el boton de ampliar */
+/* barra de figura: la miniatura completa y el acceso a pantalla completa */
+.figbar{margin-top:13px;border:1px solid var(--linea);border-radius:10px;
+  background:var(--papel-2);cursor:zoom-in;display:flex;align-items:center;
+  gap:16px;padding:6px 10px 6px 6px}
+.figbar:hover{border-color:var(--tinta-3)}
+.figbar img{width:140px;height:44px;object-fit:contain;background:#fff;
+  border:1px solid var(--linea-2);border-radius:6px;padding:3px;flex:0 0 auto}
+.figbar .txt{min-width:0;flex:1 1 auto}
+.figbar b{display:block;font-size:13px;font-weight:500}
+.figbar span.mini{display:block;margin-top:2px}
+.figbar .ampliar{position:static;flex:0 0 auto}
+.par{display:grid;gap:24px;align-items:start;
+  grid-template-columns:minmax(0,1.65fr) minmax(0,1fr)}
+@media (max-width:980px){.par{grid-template-columns:1fr}}
+.fighero{border:1px solid var(--linea);border-radius:10px;
+  background:#fff;cursor:zoom-in;position:relative;overflow:hidden}
+.fighero img{width:100%;max-height:56vh;object-fit:contain;padding:8px}
+.fighero .ampliar{position:absolute;right:10px;bottom:10px}
+.cab .tit{max-width:none}
+.cita.grande{font-size:clamp(25px,3.9vw,42px);max-width:26ch;margin-top:22px}
+
+/* -------------------------------------------------------------- piezas */
+.rejilla{display:grid;gap:16px;margin-top:34px}
+.r3{grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+.r2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.caja{background:var(--papel-2);border:1px solid var(--linea);
+  border-radius:var(--radio);padding:20px}
+.caja h3{font-size:17px;margin-bottom:8px}
+.caja p{font-size:14.5px;color:var(--tinta-2)}
+.num{font-family:var(--display);font-size:13px;color:var(--lapiz);
+  border:1px solid currentColor;border-radius:999px;width:24px;height:24px;
+  display:grid;place-items:center;margin-bottom:12px;font-variant-numeric:tabular-nums}
+.ojo{margin-top:14px;padding-top:13px;border-top:1px solid var(--linea-2);
+  font-size:13.5px;color:var(--tinta-2);font-style:italic}
+
+/* pasos del proceso: tres franjas con la huella que dejo cada una */
+.pasos{margin-top:34px;display:grid;gap:1px;background:var(--linea);
+  border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden}
+.paso{background:var(--papel-2);display:grid;gap:18px;padding:18px 22px;
+  grid-template-columns:54px minmax(0,1fr) minmax(0,.9fr);align-items:start}
+.paso .ord{font-family:var(--display);font-size:34px;line-height:.9;
+  color:var(--lapiz);font-variant-numeric:tabular-nums}
+.paso h3{font-size:17px;margin-bottom:8px}
+.paso p{font-size:14.5px;color:var(--tinta-2)}
+.paso .huella{border-left:2px solid var(--lapiz);padding-left:16px}
+.paso .huella h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--tinta-3);margin-bottom:7px}
+.paso .huella p{font-size:13.5px}
+@media (max-width:760px){.paso{grid-template-columns:40px minmax(0,1fr)}
+  .paso .huella{grid-column:1/-1;margin-top:4px}}
+
+/* cita */
+.cita{font-family:var(--display);font-size:clamp(22px,3.2vw,33px);
+  line-height:1.3;max-width:30ch;margin-top:30px}
+.cita-pie{margin-top:14px;font-size:13px;color:var(--tinta-3)}
+
+/* filas seleccionables */
+.filas{margin-top:30px;border:1px solid var(--linea);border-radius:var(--radio);
+  overflow:hidden;background:var(--papel-2)}
+.fila{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);
+  gap:14px;padding:13px 17px;border-top:1px solid var(--linea-2);
+  text-align:left;width:100%;align-items:start}
+.fila:first-child{border-top:0}
+.fila:hover{background:var(--realce)}
+.fila[aria-expanded="true"]{background:var(--realce)}
+.fila b{font-size:15px;display:block}
+.fila span{font-size:13.5px;color:var(--tinta-2)}
+.fila-rev{padding:0 18px;max-height:0;overflow:hidden;
+  transition:max-height .28s ease,padding .28s ease;background:var(--realce);
+  border-top:0}
+.fila-rev.ab{max-height:420px;padding:0 18px 18px}
+.fila-rev p{font-size:14px;color:var(--tinta-2);max-width:78ch}
+.fila-rev .k{margin-right:5px}
+
+/* selector segmentado */
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:9px;
+  background:var(--papel-2);padding:3px;gap:3px;flex-wrap:wrap;margin-top:28px}
+.seg button{padding:6px 13px;border-radius:7px;font-size:13px;
+  color:var(--tinta-2);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--tinta);color:var(--papel)}
+
+/* ------------------------------------------------------- explorador mm */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:26px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;
+  border:1px solid var(--linea);border-radius:999px;background:var(--papel-2);
+  font-size:13.5px;color:var(--tinta-2)}
+.chip img{width:19px;height:19px}
+.chip:hover{border-color:var(--tinta-3);color:var(--tinta)}
+.chip[aria-pressed="true"]{background:var(--tinta);color:var(--papel);
+  border-color:var(--tinta)}
+.chip[aria-pressed="true"] img{filter:invert(1)}
+.chips.chicos{margin-top:4px;gap:6px}
+.chips.chicos .chip{font-size:12.5px;padding:4px 9px 4px 6px}
+.chips.chicos .chip img{width:16px;height:16px}
+.chip.est{cursor:default}
+:root[data-theme="dark"] .chip img,
+:root[data-theme="dark"] .sim-art img{filter:invert(1)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .chip img,
+  :root:not([data-theme="light"]) .sim-art img{filter:invert(1)}
+  :root:not([data-theme="light"]) .chip[aria-pressed="true"] img{filter:none}
+}
+:root[data-theme="dark"] .chip[aria-pressed="true"] img{filter:none}
+.panel{margin-top:20px;border:1px solid var(--linea);border-radius:var(--radio);
+  background:var(--papel-2);overflow:hidden}
+.panel-cab{display:flex;align-items:flex-start;gap:16px;padding:22px;
+  border-bottom:1px solid var(--linea-2);flex-wrap:wrap}
+.panel-cab .sim-art{width:62px;height:62px;border:1px solid var(--linea);
+  border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--papel)}
+.panel-cab .sim-art img{width:46px;height:46px}
+.panel-cab h3{font-family:var(--display);font-size:27px;letter-spacing:-.01em}
+.panel-cab p{font-size:14.5px;color:var(--tinta-2);margin-top:7px;max-width:76ch}
+.etq{display:inline-block;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;
+  border-radius:5px;border:1px solid currentColor;margin-right:6px}
+.etq.in{color:var(--queda)} .etq.out{color:var(--lapiz)}
+.panel-cuerpo{display:grid;gap:1px;background:var(--linea-2);
+  grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.bloque{background:var(--papel-2);padding:20px 22px;min-width:0}
+.bloque h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--tinta-3);margin-bottom:11px}
+.bloque li{font-size:13.5px;padding:5px 0;border-top:1px solid var(--linea-2);
+  display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.bloque li:first-child{border-top:0}
+.bloque li .d{color:var(--tinta-3);font-size:12.5px;flex:1 1 100%}
+.vacio{font-size:13px;color:var(--tinta-3);font-style:italic}
+
+/* --------------------------------------------------------- simbolos */
+.sims{display:grid;gap:12px;margin-top:30px;
+  grid-template-columns:repeat(auto-fill,minmax(146px,1fr))}
+.sim{border:1px solid var(--linea);border-radius:var(--radio);
+  background:var(--papel-2);padding:14px;text-align:center}
+.sim:hover{border-color:var(--tinta-3)}
+.sim[aria-pressed="true"]{border-color:var(--tinta);box-shadow:var(--sombra)}
+.sim .sim-art{width:62px;height:62px;margin:0 auto 10px}
+.sim .sim-art img{width:62px;height:62px}
+.sim b{font-size:12.5px;display:block;line-height:1.3;word-break:break-word}
+.sim span{font-family:var(--mono);font-size:10.5px;color:var(--tinta-3)}
+
+/* paginas que solo llevan una figura: ocupan todo el ancho */
+.slide.figpg .tira{margin:0;border:0;background:none}
+.slide.figpg .tira-cab{max-width:1500px;padding:0 28px 12px}
+.slide.figpg .tira-lienzo{max-width:1500px;padding:0 28px}
+.slide.figpg .marco img{max-height:calc(100dvh - 300px);width:auto;
+  margin:0 auto}
+
+/* ---------------------------------------------------------- figura */
+.tira{margin-top:26px;border-top:1px solid var(--linea);
+  border-bottom:1px solid var(--linea);background:var(--papel-2)}
+.tira-cab{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;
+  gap:14px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.tira-cab b{font-size:14px}
+.tira-cab .mini{max-width:70ch}
+.tira-lienzo{max-width:1180px;margin:0 auto;padding:0 20px 20px}
+.tira-lienzo .marco{border:1px solid var(--linea);border-radius:8px;
+  overflow:hidden;background:#fff;position:relative;cursor:zoom-in}
+.tira-lienzo .marco img{width:100%}
+.ampliar{position:absolute;right:10px;bottom:10px;background:var(--tinta);
+  color:var(--papel);border-radius:7px;padding:6px 12px;font-size:12.5px;
+  box-shadow:var(--sombra)}
+
+/* ----------------------------------------------------------- tablero */
+.tabla-env{margin-top:30px;overflow-x:auto;border:1px solid var(--linea);
+  border-radius:var(--radio);background:var(--papel-2)}
+table.tb{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
+table.tb th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--tinta-3);text-align:left;
+  padding:11px 12px;border-bottom:1px solid var(--linea);vertical-align:bottom;
+  font-weight:400}
+table.tb td{padding:8px 11px;border-bottom:1px solid var(--linea-2);
+  vertical-align:top}
+table.tb tr:last-child td{border-bottom:0}
+table.tb tr.act td{background:var(--realce)}
+.est b{font-size:14.5px;display:block;line-height:1.25}
+.est span{font-size:11.5px;color:var(--tinta-3);display:block;line-height:1.35}
+.nota{font-family:var(--display);font-size:21px;line-height:1;
+  font-variant-numeric:tabular-nums}
+.sub{font-size:11px;color:var(--tinta-3);margin-top:4px;display:block;
+  line-height:1.35}
+.sin{display:inline-flex;align-items:flex-start;gap:6px;color:var(--lapiz);
+  font-size:12.5px;line-height:1.35}
+.rombo{width:12px;height:12px;border:1.6px solid currentColor;
+  transform:rotate(45deg);flex:0 0 auto;margin-top:2px}
+.si{color:var(--queda);font-size:11.5px}
+.cel-cli{cursor:pointer}
+.cel-cli:hover{background:var(--realce)}
+.detalle{margin-top:12px;border:1px solid var(--linea);border-radius:var(--radio);
+  background:var(--papel-2);padding:12px 16px;font-size:13.5px}
+.detalle h4{font-size:14.5px;margin-bottom:6px}
+.detalle .ruta{font-family:var(--mono);font-size:12.5px;color:var(--tinta-2);
+  margin-top:9px;word-break:break-word}
+
+/* --------------------------------------------------------- matriz */
+.mx-env{margin-top:26px;overflow-x:auto;border:1px solid var(--linea);
+  border-radius:var(--radio);background:var(--papel-2)}
+table.mx{border-collapse:collapse;min-width:980px;width:100%;font-size:12.5px}
+table.mx th{padding:10px 6px;border-bottom:1px solid var(--linea);
+  font-family:var(--mono);font-size:10px;font-weight:400;color:var(--tinta-3);
+  letter-spacing:.04em;writing-mode:vertical-rl;transform:rotate(180deg);
+  height:116px;white-space:nowrap}
+table.mx th.esq{writing-mode:horizontal-tb;transform:none;text-align:left;
+  min-width:300px;height:auto;vertical-align:bottom;padding-bottom:12px}
+table.mx td{padding:0;border-bottom:1px solid var(--linea-2);text-align:center}
+table.mx td.lbl{text-align:left;padding:11px 12px}
+table.mx td.lbl b{font-family:var(--mono);font-size:12px;color:var(--lapiz);
+  margin-right:8px}
+table.mx tr.act td{background:var(--realce)}
+table.mx td.cl{cursor:pointer;height:40px}
+table.mx .pt{width:11px;height:11px;border:1.5px solid var(--tinta-3);
+  transform:rotate(45deg);margin:0 auto}
+table.mx tr.act .pt{border-color:var(--lapiz);background:var(--lapiz)}
+
+/* ------------------------------------------------------ sustentacion */
+.reparto{margin-top:30px;display:grid;gap:1px;background:var(--linea);
+  border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden}
+.rp{background:var(--papel-2);display:grid;gap:14px;padding:18px 20px;
+  grid-template-columns:150px 110px minmax(0,1fr);align-items:baseline}
+.rp.cab{background:var(--realce)}
+.rp.cab span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tinta-3)}
+.rp b{font-size:15px}
+.rp .vent{font-family:var(--mono);font-size:13px;color:var(--lapiz);
+  font-variant-numeric:tabular-nums}
+.rp p{font-size:13.5px;color:var(--tinta-2)}
+@media (max-width:620px){.rp{grid-template-columns:1fr;gap:5px}
+  .rp.cab{display:none}}
+
+/* ----------------------------------------------------------- visor */
+.visor{position:fixed;inset:0;z-index:200;background:rgba(10,13,22,.94);
+  display:flex;flex-direction:column}
+.visor-barra{display:flex;gap:9px;align-items:center;padding:12px 16px;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+  border-bottom:1px solid rgba(255,255,255,.12);flex-wrap:wrap}
+.visor-barra b{color:#fff;font-size:13.5px;margin-right:auto;font-weight:500}
+.visor-barra button{border:1px solid rgba(255,255,255,.28);color:#fff;
+  border-radius:7px;padding:5px 11px;font-size:12.5px}
+.visor-barra button:hover{background:rgba(255,255,255,.12)}
+.visor-lienzo{flex:1;overflow:hidden;position:relative;cursor:grab;
+  touch-action:none}
+.visor-lienzo.arr{cursor:grabbing}
+.visor-lienzo img{position:absolute;top:0;left:0;transform-origin:0 0;
+  background:#fff;max-width:none}
+.visor-pie{padding:9px 16px;padding-bottom:calc(9px + env(safe-area-inset-bottom,0px));
+  color:rgba(255,255,255,.6);font-size:12px;font-family:var(--mono);
+  border-top:1px solid rgba(255,255,255,.12)}
+/* ------------------------------------------- diapositivas oscuras (portada,
+   pregunta y cierre), como en la plantilla del grupo */
+.slide.oscura{background:#1b2447;color:#eef1f8}
+.slide.oscura .tit,.slide.oscura h1{color:#fff}
+.slide.oscura .sobre{font-size:14.5px;color:#9fb0d8;letter-spacing:.02em}
+.slide.oscura .hero-sub{color:#b9c6e4;max-width:62ch;font-size:17px;
+  margin-top:20px}
+.slide.oscura .bajada.clara{color:#c3cfe8;font-size:18px;max-width:72ch}
+.slide.oscura h1{font-family:var(--display);font-size:clamp(34px,5vw,62px);
+  line-height:1.08;letter-spacing:-.02em;margin-top:22px}
+.regla{width:300px;height:2px;background:#e8545f;margin:34px 0 26px}
+.firma{display:flex;gap:40px;justify-content:space-between;flex-wrap:wrap}
+.firma li{font-size:16px;padding:3px 0;color:#e7ecf8}
+.firma .dato{text-align:right;display:flex;flex-direction:column;gap:2px}
+.firma .dato span{font-size:12.5px;color:#8fa2cd}
+.firma .dato b{font-size:15px;font-weight:500;color:#fff}
+.fuente-cita{color:#e8545f;font-size:14.5px;margin-top:16px}
+.slide.oscura .cita.grande{color:#fff;font-style:italic;
+  font-size:clamp(24px,3.6vw,40px);line-height:1.34;max-width:40ch;
+  margin-top:26px}
+.slide.oscura .caja{background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.16);color:#e7ecf8}
+.slide.oscura .caja h3{color:#fff}
+.slide.oscura .caja p{color:#c3cfe8}
+.slide.oscura .caja.tarj:hover{border-color:rgba(255,255,255,.4)}
+.rombo.marca-agua{width:76px;height:76px;border:1.5px solid rgba(255,255,255,.3);
+  display:block;margin:0 0 42px 30px}
+.pie-cierre{margin-top:28px;font-style:italic;color:#aebbdb;font-size:15.5px;
+  max-width:80ch}
+.cadena3{display:flex;gap:14px;align-items:stretch;margin-top:28px;
+  flex-wrap:wrap}
+.eslabon{flex:1 1 230px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:18px 20px}
+.eslabon b{display:block;color:#e8545f;font-size:14.5px;font-weight:500;
+  margin-bottom:9px}
+.eslabon p{font-size:14px;color:#c9d4ea;line-height:1.5}
+.flecha{align-self:center;color:#6d80ad;font-size:22px}
+@media (max-width:860px){.flecha{display:none}}
+
+/* -------------------------------------------------------------- tarjetas */
+.caja.tarj{text-align:left;width:100%;display:block}
+.caja.tarj .oculto{max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .3s ease,opacity .2s ease,margin-top .3s ease;
+  font-size:13.5px;margin-top:0}
+.caja.tarj.abierta .oculto{max-height:260px;opacity:1;margin-top:12px}
+.caja.num-tarj .num{display:grid;place-items:center;width:34px;height:34px;
+  border-radius:999px;background:var(--tinta);color:var(--papel);
+  font-family:var(--display);font-size:16px;margin-bottom:16px;border:0}
+.guion{width:62px;height:2px;background:var(--lapiz);margin:16px 0 13px}
+.conse{font-style:italic;color:var(--tinta-3);font-size:13.5px}
+.caja.chica{padding:14px 16px}
+.caja.chica h3{font-size:15px;color:var(--tinta);margin-bottom:5px}
+.caja.chica p{font-size:13.5px}
+.cajas{display:flex;flex-direction:column;gap:10px}
+.cajas.fila4{display:grid;gap:10px;margin-top:12px;
+  grid-template-columns:repeat(4,minmax(0,1fr));align-items:start}
+@media (max-width:900px){.cajas.fila4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fighero.ancha img{max-height:48vh}
+.caja.roja{border-color:var(--lapiz);background:var(--lapiz-sv);margin-top:10px}
+.caja.roja h3{color:var(--lapiz)}
+.rotulo-f{font-size:14.5px;font-weight:500;margin-bottom:12px;
+  color:var(--tinta)}
+.caja.fam .ids{font-family:var(--display);font-size:25px;color:var(--lapiz);
+  display:block;margin-bottom:8px;letter-spacing:.02em}
+.caja.fam[aria-pressed="true"]{border-color:var(--lapiz);
+  background:var(--lapiz-sv)}
+.caja.sup{display:flex;gap:16px;align-items:flex-start}
+.caja.sup .chapa{flex:0 0 auto;display:grid;place-items:center;width:30px;
+  height:30px;border-radius:999px;background:var(--tinta);color:var(--papel);
+  font-family:var(--mono);font-size:12px}
+.caja.sup h3{font-size:15.5px;margin-bottom:9px}
+.caja.sup p{font-size:13.5px;margin-top:6px}
+.caja.sup p b{font-weight:500;color:var(--tinta);margin-right:5px}
+
+/* --------------------------------------------- la tabla de los 15 simbolos */
+.simtab{display:grid;gap:1px;background:var(--linea);border:1px solid
+  var(--linea);border-radius:var(--radio);overflow:hidden;margin-top:22px;
+  grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:900px){.simtab{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sim-celda{background:var(--papel-2);display:flex;align-items:center;gap:11px;
+  padding:11px 13px;min-width:0}
+.sim-celda img{width:34px;height:34px;flex:0 0 auto}
+.sim-celda b{font-size:13px;font-weight:500;line-height:1.25;word-break:break-word}
+:root[data-theme="dark"] .sim-celda img{filter:invert(1)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .sim-celda img{filter:invert(1)}}
+.rombo-caja{display:flex;gap:22px;align-items:flex-start;margin-top:18px;
+  border-color:var(--lapiz);background:var(--lapiz-sv)}
+.rombo.gr{width:52px;height:52px;border-width:2px;color:var(--lapiz);
+  flex:0 0 auto;margin:6px 0 0 6px}
+.rombo-caja h3{color:var(--lapiz);font-size:17px}
+.rombo-caja p{font-size:14px;margin-top:7px}
+.nota-r{font-style:italic;color:var(--lapiz)!important}
+
+/* ------------------------------------------------ los hallazgos del modelo */
+.rombolist{display:flex;flex-direction:column;gap:14px}
+.rombo-item{display:flex;gap:14px;align-items:flex-start}
+.rombo-item .rombo{width:17px;height:17px;color:var(--lapiz);margin-top:4px}
+.rombo-item b{font-size:14.5px;font-weight:500;display:block;
+  color:var(--tinta)}
+.rombo-item p{font-size:13.5px;color:var(--tinta-2);margin-top:4px;
+  line-height:1.5}
+
+/* --------------------------------------------------- las cuatro cifras */
+.cifras4{display:grid;gap:10px;margin-top:13px;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.cifra-g{padding:13px 16px}
+.cifra-g b{display:block;font-family:var(--display);font-size:30px;
+  line-height:1;color:var(--lapiz);letter-spacing:-.01em}
+.cifra-g p{font-size:12.5px;margin-top:7px;line-height:1.4}
+
+/* ------------------------------------------- las bandas de los accionables */
+.bandas{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.banda{display:grid;gap:10px;grid-template-columns:230px minmax(0,1fr);
+  align-items:stretch}
+@media (max-width:820px){.banda{grid-template-columns:1fr}}
+.banda-r{background:var(--tinta);color:var(--papel);border-radius:9px;
+  padding:13px 16px}
+.banda-r.roja{background:var(--lapiz)}
+.banda-r b{display:block;font-size:15px;font-weight:500}
+.banda-r span{display:block;font-size:12px;opacity:.75;margin-top:4px;
+  line-height:1.4}
+.banda-c{background:var(--papel-2);border:1px solid var(--linea);
+  border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;
+  justify-content:center;gap:2px}
+.acc{display:block;width:100%;text-align:left;padding:8px 10px;
+  border-radius:7px;font-size:14px}
+.acc:hover{background:var(--realce)}
+.acc .mono{color:var(--lapiz);margin-right:11px;font-size:12.5px}
+.acc .oculto{display:block;max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .3s ease,opacity .2s ease,margin-top .3s ease;
+  font-size:13px;color:var(--tinta-2);margin-top:0}
+.acc.abierta .oculto{max-height:200px;opacity:1;margin-top:7px}
+.acc .oculto b{font-weight:500;color:var(--tinta)}
+
+.det-lista{margin-top:10px;border-top:1px solid var(--linea-2)}
+.det-lista li{font-size:12.5px;padding:6px 0;border-bottom:1px solid
+  var(--linea-2);color:var(--tinta-2);line-height:1.5}
+.det-lista li:last-child{border-bottom:0}
+.det-lista.alta{max-height:260px;overflow-y:auto;scrollbar-width:thin}
+.rombo-item.abrible{text-align:left;width:100%;border:1px solid transparent;
+  border-radius:9px;padding:7px 9px;margin:-7px -9px;transition:background
+  .16s ease}
+.rombo-item.abrible:hover{background:var(--realce)}
+.rombo-item .oculto{max-height:0;overflow:hidden;opacity:0;margin-top:0;
+  transition:max-height .3s ease,opacity .2s ease,margin-top .3s ease}
+.rombo-item.abierta .oculto{max-height:200px;opacity:1;margin-top:4px}
+
+/* el detalle del tablero aparece al pulsar, no antes */
+.detalle[hidden]{display:none}
+
+/* ---------------------------------------------- acabado e interaccion */
+/* las tarjetas que se abren avisan que se abren */
+.caja.tarj{position:relative;transition:border-color .18s ease,
+  box-shadow .18s ease,transform .18s ease}
+.caja.tarj:hover{box-shadow:var(--sombra);transform:translateY(-2px)}
+.caja.tarj.abrible::after{content:"+";position:absolute;top:12px;right:14px;
+  font-family:var(--mono);font-size:15px;line-height:1;color:var(--tinta-3);
+  transition:transform .2s ease,color .2s ease}
+.caja.tarj.abrible.abierta::after{content:"−";color:var(--lapiz)}
+.slide.oscura .caja.tarj.abrible::after{color:#8fa2cd}
+
+/* entrada escalonada de las piezas de cada diapositiva */
+.slide.entra .rejilla>*,.slide.entra .simtab>*,.slide.entra .bandas>*,
+.slide.entra .cadena3>*,.slide.entra .cifras4>*,.slide.entra .cajas>*,
+.slide.entra .rombolist>*{animation:surge .4s cubic-bezier(.2,.9,.3,1) both}
+@keyframes surge{from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}}
+.slide.entra .rejilla>*:nth-child(2),.slide.entra .cajas>*:nth-child(2),
+.slide.entra .bandas>*:nth-child(2),.slide.entra .cifras4>*:nth-child(2),
+.slide.entra .rombolist>*:nth-child(2){animation-delay:.055s}
+.slide.entra .rejilla>*:nth-child(3),.slide.entra .cajas>*:nth-child(3),
+.slide.entra .bandas>*:nth-child(3),.slide.entra .cifras4>*:nth-child(3),
+.slide.entra .rombolist>*:nth-child(3){animation-delay:.11s}
+.slide.entra .rejilla>*:nth-child(4),.slide.entra .cajas>*:nth-child(4),
+.slide.entra .bandas>*:nth-child(4),.slide.entra .cifras4>*:nth-child(4),
+.slide.entra .rombolist>*:nth-child(4){animation-delay:.165s}
+.slide.entra .simtab>*:nth-child(n+6){animation-delay:.06s}
+.slide.entra .simtab>*:nth-child(n+11){animation-delay:.12s}
+
+/* las celdas de simbolo son pulsables */
+.sim-celda{cursor:pointer;transition:background .16s ease}
+.sim-celda:hover{background:var(--realce)}
+.sim-celda[aria-pressed="true"]{background:var(--tinta)}
+.sim-celda[aria-pressed="true"] b{color:var(--papel)}
+.sim-celda[aria-pressed="true"] img{filter:invert(1)}
+:root[data-theme="dark"] .sim-celda[aria-pressed="true"] img{filter:none}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .sim-celda[aria-pressed="true"] img{filter:none}}
+.sim-det{margin-top:14px;border:1px solid var(--linea);border-radius:var(--radio);
+  background:var(--papel-2);padding:16px 18px;display:flex;gap:18px;
+  align-items:flex-start}
+.sim-det img{width:52px;height:52px;flex:0 0 auto;border:1px solid var(--linea);
+  border-radius:8px;padding:5px;background:var(--papel)}
+:root[data-theme="dark"] .sim-det img{filter:invert(1)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .sim-det img{filter:invert(1)}}
+.sim-det h4{font-family:var(--display);font-size:20px;margin-bottom:6px}
+.sim-det p{font-size:14px;color:var(--tinta-2)}
+.sim-det .sinon{margin-top:8px;font-size:12.5px;color:var(--tinta-3)}
+
+/* los conceptos que entran al punto de vista, como fichas */
+.vp-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.vp-chips .uno{display:inline-flex;align-items:center;gap:7px;padding:5px 11px
+  5px 7px;border:1px solid var(--linea);border-radius:999px;
+  background:var(--papel-2);font-size:12.5px}
+.vp-chips .uno img{width:17px;height:17px}
+:root[data-theme="dark"] .vp-chips img{filter:invert(1)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .vp-chips img{filter:invert(1)}}
+
+/* las cifras y los contadores suben desde cero */
+.cnt{font-variant-numeric:tabular-nums}
+
+/* el boton discreto para ver los nueve supuestos */
+.mas{margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--linea);border-radius:8px;padding:7px 14px;
+  font-size:13px;background:var(--papel-2);color:var(--tinta-2)}
+.mas:hover{border-color:var(--tinta-3);color:var(--tinta)}
+
+/* las figuras, con mas presencia */
+.fighero{transition:border-color .18s ease,box-shadow .18s ease}
+.fighero:hover{border-color:var(--tinta-3);box-shadow:var(--sombra)}
+.fighero .ampliar{opacity:.9;transition:opacity .18s ease}
+.fighero:hover .ampliar{opacity:1}
+.figbar{transition:border-color .18s ease,box-shadow .18s ease}
+.figbar:hover{box-shadow:var(--sombra)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;
+  transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+<div class="riel">
+  <div class="riel-in">
+    <button class="bt idx" id="btIdx" aria-label="Ver el índice">
+      <span class="bars"><i></i><i></i><i></i></span>Índice</button>
+    <div class="marca">ARTI&nbsp;·&nbsp;<b>Workshop&nbsp;1</b>
+      <span class="sep">/</span><span id="aqui">Portada</span></div>
+    <div class="utiles">
+      <span class="voz" id="voz">Andrés</span>
+      <span class="crono" id="crono" title="Quince minutos de sustentación">15:00</span>
+      <button class="bt" id="btCrono">Iniciar</button>
+      <button class="bt" id="btTema" aria-label="Cambiar tema">Tema</button>
+    </div>
+  </div>
+  <div class="barra"><span id="barra"></span></div>
+</div>
+
+<div class="deck" id="deck">
+<!-- =========================================================== 1 · portada -->
+<section class="slide oscura" id="inicio" data-t="Portada">
+ <div class="col">
+  <p class="sobre">Workshop 1 &nbsp;·&nbsp; Modelos, Vistas y Problemas</p>
+  <h1>Evaluación y seguimiento<br>de estudiantes</h1>
+  <p class="hero-sub">Cómo conceptualizamos el testimonio del profesor, y qué
+    se puede ver hoy con los datos que ya existen</p>
+  <div class="regla"></div>
+  <div class="firma">
+    <ul>
+      <li>Andrés Felipe García Caycedo</li>
+      <li>David Felipe Laverde Parra</li>
+      <li>Jose Carlos Salgado Pacheco</li>
+    </ul>
+    <div class="dato">
+      <span>Docente</span>
+      <b>Maria Camila Romero</b>
+      <span style="margin-top:12px">ARTI · Fundamentos de Arquitectura · 2026-20</span>
+      <span>Universidad de los Andes</span>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- ========================================================= 2 · pregunta -->
+<section class="slide oscura" id="pregunta" data-t="La pregunta">
+ <div class="col">
+  <p class="sobre">La pregunta que tenemos que poder contestar</p>
+  <p class="cita grande">“Quisiera poder detectar a tiempo quién se está
+    quedando atrás, o quién está participando poco, pero todo está disperso y
+    es difícil de integrar.”</p>
+  <p class="fuente-cita">El testimonio del profesor</p>
+  <div class="rejilla r3" id="tresRazones"></div>
+ </div>
+</section>
+
+<!-- ======================================================== 3 · decisiones -->
+<section class="slide" id="decisiones" data-t="Qué decidimos modelar">
+ <div class="col">
+  <h2 class="tit">Qué decidimos modelar</h2>
+  <p class="bajada">El testimonio pide ver, no pide un sistema. Por eso
+    modelamos los objetos sobre los que querría mirar.</p>
+  <div class="rejilla r3" id="decs"></div>
+ </div>
+</section>
+
+<!-- ======================================================== 4 · metamodelo -->
+<section class="slide" id="metamodelo" data-t="El metamodelo">
+ <div class="col">
+  <h2 class="tit">El metamodelo</h2>
+  <p class="bajada" id="mmCifras"></p>
+  <div class="fighero ancha" data-fig="fig/figW_mm.png"
+       data-tit="Figura 1 · Metamodelo completo (BAC-09)">
+    <img src="fig/figW_mm.png" alt="Metamodelo completo">
+    <span class="ampliar">Ampliar</span>
+  </div>
+  <div class="cajas fila4" id="mmCajas"></div>
+ </div>
+</section>
+
+<!-- ========================================================== 5 · lenguaje -->
+<section class="slide" id="lenguaje" data-t="El lenguaje gráfico">
+ <div class="col">
+  <h2 class="tit">Un lenguaje para que lo lea el profesor</h2>
+  <p class="bajada">15 símbolos, 7 variables visuales. Dos familias: las hojas
+    de evaluación y las siluetas de persona.</p>
+  <div class="simtab" id="simtab"></div>
+  <div class="caja rombo-caja">
+    <span class="rombo gr"></span>
+    <div>
+      <h3>El rombo vacío</h3>
+      <p>Es el único símbolo del lenguaje que no dibuja algo que existe, sino
+        algo que falta: marca una asociación que el metamodelo declara
+        opcional y que en este dictado vale cero.</p>
+      <p class="nota-r">Lo agregamos a propósito. El testimonio trata sobre
+        todo de ausencias, y un lenguaje que solo sabe dibujar lo que hay no
+        puede mostrar el problema.</p>
+    </div>
+  </div>
+  <div class="figbar" data-fig="fig/figW_lang.png"
+       data-tit="Figura 2 · Catálogo de símbolos del lenguaje">
+    <img src="fig/figW_lang.png" alt="Catálogo de símbolos">
+    <div class="txt"><b>Figura 2 · El catálogo completo, con la sintaxis y la
+      semántica de cada símbolo</b></div>
+    <span class="ampliar">Ampliar</span>
+  </div>
+ </div>
+</section>
+
+<!-- ============================================================ 6 · modelo -->
+<section class="slide" id="modelo" data-t="El modelo">
+ <div class="col">
+  <h2 class="tit">El modelo</h2>
+  <p class="bajada">42 instancias y 78 enlaces de un dictado real. Dibujado
+    por anidamiento: una ficha dentro de otra es la asociación.</p>
+  <div class="par">
+    <div class="fighero" data-fig="fig/figW_modelo.png"
+         data-tit="Figura 3 · Modelo instanciado, 42 instancias y 78 enlaces">
+      <img src="fig/figW_modelo.png" alt="Modelo instanciado">
+      <span class="ampliar">Ampliar</span>
+    </div>
+    <div>
+      <h4 class="rotulo-f">Los datos están escogidos para que el modelo
+        reproduzca lo que el testimonio describe</h4>
+      <div class="rombolist" id="hallazgos"></div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- ===================================================== 7 · punto de vista -->
+<section class="slide" id="puntodevista" data-t="El punto de vista">
+ <div class="col">
+  <h2 class="tit">El punto de vista</h2>
+  <p class="bajada" id="vpCifras"></p>
+  <div class="par">
+    <div>
+      <div class="fighero" data-fig="fig/figW_vp.png"
+           data-tit="Figura 4 · Punto de vista del profesor">
+        <img src="fig/figW_vp.png" alt="Punto de vista">
+        <span class="ampliar">Ampliar</span>
+      </div>
+      <div class="caja" style="margin-top:14px">
+        <h3>Criterio del recorte</h3>
+        <p>El recorte del modelo se establece a partir de la información
+          estrictamente necesaria para responder la pregunta sobre una persona
+          específica. Se conservan únicamente las entidades y relaciones que
+          permiten obtener dicha información, mientras que se excluyen
+          aquellas asociadas con la descripción del proceso mediante el cual
+          se generó la evaluación, dado que ese contexto es conocido
+          previamente por el profesor y no constituye información necesaria
+          para la consulta.</p>
+      </div>
+    </div>
+    <div>
+      <h4 class="rotulo-f">Los dos huecos que deja el recorte son la
+        respuesta</h4>
+      <div class="caja roja">
+        <h3>Quitamos GrupoDeTrabajo</h3>
+        <p>Calificacion pierde la relación con trabajos grupales. El modelo
+          solo permite consultar calificaciones asociadas directamente a un
+          Estudiante.</p>
+      </div>
+      <div class="caja roja">
+        <h3>Quitamos Rubrica y CriterioRubrica</h3>
+        <p>Se pierde la trazabilidad entre Evaluacion y la rúbrica utilizada.
+          Solo se conserva el resultado numérico de la evaluación.</p>
+      </div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- ============================================================= 8 · vista -->
+<section class="slide" id="vista" data-t="La vista de consulta">
+ <div class="col">
+  <h2 class="tit">La vista de consulta</h2>
+  <p class="bajada">El tablero que le mostramos al profesor. Cada celda se
+    calcula recorriendo el modelo; ninguna se escribió a mano.</p>
+  <div class="tabla-env"><table class="tb" id="tb"></table></div>
+  <div class="detalle" id="detTb" hidden></div>
+  <div class="cifras4" id="cifras4"></div>
+  <div class="figbar" data-fig="fig/figW_vista.png"
+       data-tit="Figura 5 · Tablero de seguimiento por estudiante">
+    <img src="fig/figW_vista.png" alt="Tablero de seguimiento">
+    <div class="txt"><b>Figura 5 · La vista dibujada con el lenguaje, con el
+      camino de asociaciones de cada columna</b></div>
+    <span class="ampliar">Ampliar</span>
+  </div>
+ </div>
+</section>
+
+<!-- ========================================================= 9 · problemas -->
+<section class="slide" id="problemas" data-t="Los problemas">
+ <div class="col">
+  <h2 class="tit">Los problemas</h2>
+  <p class="bajada">Siete problemas, identificados a partir de los testimonios
+    y ubicados en la conceptualización. Se agrupan en tres familias.</p>
+  <div class="rejilla r3" id="familias"></div>
+  <div class="mx-env"><table class="mx" id="mx"></table></div>
+ </div>
+</section>
+
+<!-- ========================================================= 10 · supuestos -->
+<section class="slide" id="supuestos" data-t="Los supuestos">
+ <div class="col">
+  <h2 class="tit">Los supuestos</h2>
+  <p class="bajada">Nueve en el documento. Estos cuatro son los que más
+    sostienen la conceptualización.</p>
+  <div class="rejilla r2" id="sups"></div>
+ </div>
+</section>
+
+<!-- ======================================================= 11 · accionables -->
+<section class="slide" id="accionables" data-t="Los accionables">
+ <div class="col">
+  <h2 class="tit">Los accionables inmediatos</h2>
+  <p class="bajada">Siete, previos al diseño de la solución. No son tareas de
+    implementación: son decisiones y precondiciones.</p>
+  <div class="bandas" id="bandas"></div>
+ </div>
+</section>
+
+<!-- ============================================================ 12 · cierre -->
+<section class="slide oscura" id="cierre" data-t="La línea conceptual">
+ <div class="col">
+  <span class="rombo marca-agua"></span>
+  <h2 class="tit">La línea conceptual</h2>
+  <p class="bajada clara">Para saber quién se está quedando atrás hacen falta
+    tres evidencias sobre la misma persona: lo que sacó, cuánto participó y
+    cuánto escribió.</p>
+  <div class="cadena3" id="cadena"></div>
+  <p class="pie-cierre">Por eso los accionables no empiezan por construir una
+    plataforma, sino por decidir dos cosas que nadie ha decidido.</p>
+ </div>
+</section>
+
+<!-- ======================================================= 13 · sustentación -->
+<section class="slide" id="sustentacion" data-t="El reparto">
+ <div class="col">
+  <h2 class="tit">Quince minutos, tres voces</h2>
+  <p class="bajada">Cada uno presenta su bloque; cualquiera de los tres
+    responde por el resto del trabajo.</p>
+  <div class="reparto" id="reparto"></div>
+  <div class="caja" style="margin-top:18px">
+    <h3>Verificación</h3>
+    <p>Las seis figuras, las tablas del documento y esta presentación salen de
+      una sola definición. Sobre ella corren 82 comprobaciones: la forma del
+      metamodelo, el modelo contra el metamodelo con las 16 restricciones
+      evaluadas sobre los valores, y el punto de vista y la vista contra
+      ambos. Pasan las 82.</p>
+  </div>
+ </div>
+</section>
+</div><!-- /deck -->
+
+<div class="pie">
+  <div class="pie-in">
+    <button class="nav-bt" id="btAnt" aria-label="Diapositiva anterior">
+      <span class="fl">&larr;</span>Anterior</button>
+    <div class="puntos" id="puntos"></div>
+    <div class="cuenta"><b id="nAct">1</b><span>/</span><span id="nTot">20</span></div>
+    <button class="nav-bt pri" id="btSig" aria-label="Diapositiva siguiente">
+      Siguiente<span class="fl">&rarr;</span></button>
+  </div>
+</div>
+</div><!-- /app -->
+
+<div class="indice" id="indice" hidden>
+  <div class="indice-cab">
+    <b id="ixTot">Las diapositivas</b>
+    <span class="mini">Pulse una para ir · <span class="k">I</span> abre y
+      cierra este índice · <span class="k">&larr;</span>
+      <span class="k">&rarr;</span> pasan de página</span>
+    <button class="bt" id="btIdxX">Cerrar</button>
+  </div>
+  <div class="indice-rej" id="indiceRej"></div>
+</div>
+
+<script type="application/json" id="datos">{"conceptos":[{"n":"Materia","picto":"pizarra","padre":null,"desc":"Dictado concreto de una asignatura durante un periodo academico. Reune al profesor, a los monitores, a los estudiantes inscritos, el plan de evaluacion y los grupos conformados. Es el concepto raiz: desde ella se alcanza todo lo demas siguiendo las asociaciones.","sin":"Curso, seccion, asignatura dictada","simbolo":"Pizarra con un renglon de texto. Es el dictado concreto de la asignatura en un periodo.","attrs":[{"n":"id","t":"String","d":"Identificador de la materia dentro de la institucion."},{"n":"nombre","t":"String","d":"Nombre de la asignatura que se dicta."},{"n":"tipoPrograma","t":"TipoPrograma","d":"Nivel del programa. Valor tomado de la enumeracion TipoPrograma."},{"n":"periodo","t":"String","d":"Periodo academico del dictado. Es lo que hace que cada semestre arranque sin nada acumulado."}],"hereda":[],"sale":[{"rol":"profesor","a":"Profesor","m":"1","d":"La materia no queda definida sin la persona responsable de dictarla."},{"rol":"monitores","a":"Monitor","m":"1..*","d":"El apoyo a la calificacion es una condicion del dictado, no un rasgo de la persona."},{"rol":"estudiantes","a":"Estudiante","m":"1..*","d":"La materia necesita saber quienes la cursan; cada estudiante es una linea de seguimiento."},{"rol":"evaluaciones","a":"Evaluacion","m":"1..*","d":"El plan de evaluacion define la materia: cambiar las evaluaciones y sus pesos cambia la materia."},{"rol":"grupos","a":"GrupoDeTrabajo","m":"0..*","d":"Los grupos se conforman dentro de la materia. Admite cero porque una materia sin trabajos grupales no conforma ninguno."}],"entra":[],"hijos":[],"restr":["R4","R6","R7","R9","R10","R14"],"vp":true,"vpRazon":"","insts":["arqEmpresarial"]},{"n":"Profesor","picto":"profe","padre":null,"desc":"Persona responsable de dictar la materia. Es quien califica los parciales y quien observa la participacion en clase.","sin":"Docente, profesor de catedra","simbolo":"Persona con puntero. Es quien dicta, califica los parciales y observa la clase.","attrs":[{"n":"id","t":"String","d":"Identificador del profesor."},{"n":"nombre","t":"String","d":"Nombre completo del profesor."},{"n":"correo","t":"String","d":"Correo por el que recibe los mensajes de los estudiantes."},{"n":"especialidad","t":"String","d":"Area de especialidad del docente."}],"hereda":[],"sale":[],"entra":[{"rol":"profesor","de":"Materia","m":"1"},{"rol":"calificadorProfesor","de":"Calificacion","m":"0..1"}],"hijos":[],"restr":["R3","R4","R9"],"vp":false,"vpRazon":"La pregunta es sobre el estudiante, no sobre quien lo califico. Quien firma la nota importa para auditar el reparto del juicio, no para detectar a quien se esta quedando atras.","insts":["profeCatedra"]},{"n":"Monitor","picto":"monitor","padre":null,"desc":"Persona que apoya al profesor calificando los trabajos que los estudiantes hacen fuera de clase.","sin":"Auxiliar, monitoria, asistente de docencia","simbolo":"Persona con libreta. Es quien apoya calificando los trabajos de fuera de clase.","attrs":[{"n":"id","t":"String","d":"Identificador del monitor."},{"n":"nombre","t":"String","d":"Nombre completo del monitor."},{"n":"correo","t":"String","d":"Correo institucional del monitor."}],"hereda":[],"sale":[],"entra":[{"rol":"monitores","de":"Materia","m":"1..*"},{"rol":"calificadorMonitor","de":"Calificacion","m":"0..1"}],"hijos":[],"restr":["R3","R4","R9"],"vp":false,"vpRazon":"Por la misma razon que Profesor: el punto de vista mira al estudiante, no a quien emitio la nota.","insts":["monLaura","monJulian"]},{"n":"Estudiante","picto":"alumno","padre":null,"desc":"Persona inscrita en la materia. Es la unidad sobre la que recaen la evaluacion y el seguimiento.","sin":"Alumno, inscrito","simbolo":"Persona con morral. Es la unidad sobre la que recaen la evaluacion y el seguimiento.","attrs":[{"n":"id","t":"String","d":"Codigo del estudiante."},{"n":"nombre","t":"String","d":"Nombre completo del estudiante."},{"n":"correo","t":"String","d":"Correo desde el que escribe al profesor."},{"n":"programa","t":"String","d":"Programa academico en el que esta matriculado."},{"n":"semestre","t":"Number","d":"Semestre que cursa. Acotado por R13."}],"hereda":[],"sale":[{"rol":"calificaciones","a":"Calificacion","m":"0..*","d":"Las notas individuales cuelgan del estudiante. Admite cero porque puede no tener ninguna todavia."},{"rol":"participaciones","a":"Participacion","m":"0..*","d":"Las intervenciones en clase se atribuyen al estudiante. Admite cero, y ese cero es el caso del estudiante que nadie ve."},{"rol":"interacciones","a":"Interaccion","m":"0..*","d":"Los correos se atribuyen al estudiante que los envia."}],"entra":[{"rol":"estudiantes","de":"Materia","m":"1..*"},{"rol":"integrante","de":"GrupoDeTrabajo","m":"2..*"}],"hijos":[],"restr":["R1","R2","R5","R6","R8","R9","R13"],"vp":true,"vpRazon":"","insts":["ana","brian","camila","diego"]},{"n":"GrupoDeTrabajo","picto":"grupo","padre":null,"desc":"Conjunto de estudiantes de la materia conformado para producir entregas conjuntas. Existe como concepto propio porque es lo que hace que la autoria de un trabajo sea colectiva y que el aporte de cada integrante quede fuera del alcance del juicio.","sin":"Equipo, grupo","simbolo":"Tres siluetas juntas. Es el conjunto de estudiantes que produce una entrega conjunta.","attrs":[{"n":"id","t":"String","d":"Identificador del grupo."},{"n":"nombre","t":"String","d":"Nombre con el que el grupo se identifica dentro de la materia."}],"hereda":[],"sale":[{"rol":"integrante","a":"Estudiante","m":"2..*","d":"El grupo se define por sus integrantes. Dos como minimo, porque un grupo de uno no es un grupo."},{"rol":"calificacionesGrupales","a":"Calificacion","m":"0..*","d":"La nota de autoria colectiva cuelga del grupo. Ese cambio de dueno es el punto donde el aporte individual deja de ser atribuible."}],"entra":[{"rol":"grupos","de":"Materia","m":"0..*"},{"rol":"grupos","de":"TrabajoGrupal","m":"1..*"}],"hijos":[],"restr":["R1","R2","R6","R7","R8"],"vp":false,"vpRazon":"El grupo no es una linea de seguimiento individual. Dejarlo fuera no es una omision: es lo que hace visible que la nota de un trabajo grupal no es alcanzable desde ningun Estudiante.","insts":["grupo1","grupo2"]},{"n":"Evaluacion","picto":"evaluacion","padre":null,"desc":"Actividad del plan de evaluacion de la materia que se califica con una rubrica. Es el concepto padre: toda evaluacion concreta es un parcial, un trabajo individual o un trabajo grupal.","sin":"Actividad evaluable, nota, evaluacion","simbolo":"Hoja con una estrella. Es cualquier actividad del plan de evaluacion; los tres tipos concretos comparten esta hoja.","attrs":[{"n":"id","t":"String","d":"Identificador de la evaluacion."},{"n":"nombre","t":"String","d":"Nombre de la evaluacion dentro del plan."},{"n":"fecha","t":"Date","d":"Dia en que la evaluacion se aplica o se publica."},{"n":"porcentaje","t":"Number","d":"Peso de la evaluacion en la nota de la materia. Acotado por R10 y R13."},{"n":"instrucciones","t":"String","d":"Lo que se le pide al estudiante."}],"hereda":[],"sale":[{"rol":"rubrica","a":"Rubrica","m":"1","d":"Una evaluacion no esta definida si no se sabe con que instrumento se juzga."}],"entra":[{"rol":"evaluaciones","de":"Materia","m":"1..*"},{"rol":"evaluacion","de":"Calificacion","m":"1"}],"hijos":["Parcial","TrabajoIndividual","TrabajoGrupal"],"restr":["R2","R5","R10","R13","R14"],"vp":true,"vpRazon":"","insts":[]},{"n":"Parcial","picto":"examen","padre":"Evaluacion","desc":"Evaluacion individual con un numero de preguntas, un tipo de pregunta y una duracion definidos. Segun el testimonio, la califica el profesor.","sin":"Examen, prueba, quiz","simbolo":"Hoja con un reloj. Es la evaluacion individual con duracion definida, la que califica el profesor.","attrs":[{"n":"totalPreguntas","t":"Number","d":"Cantidad de preguntas del parcial."},{"n":"tipoPregunta","t":"TipoPregunta","d":"Forma de las preguntas. Valor tomado de la enumeracion TipoPregunta."},{"n":"duracionEnMinutos","t":"Number","d":"Tiempo disponible para resolverlo."}],"hereda":[{"n":"id","t":"String"},{"n":"nombre","t":"String"},{"n":"fecha","t":"Date"},{"n":"porcentaje","t":"Number"},{"n":"instrucciones","t":"String"}],"sale":[],"entra":[],"hijos":[],"restr":["R2","R4","R13"],"vp":true,"vpRazon":"","insts":["parcial1"]},{"n":"TrabajoIndividual","picto":"tarea","padre":"Evaluacion","desc":"Evaluacion que el estudiante realiza por su cuenta fuera de clase. La pueden calificar el profesor o los monitores.","sin":"Taller individual, ensayo, entrega","simbolo":"Hoja con un lapiz. Es lo que el estudiante hace por su cuenta fuera de clase.","attrs":[{"n":"descripcion","t":"String","d":"Descripcion del trabajo que se pide."},{"n":"fechaEntrega","t":"Date","d":"Dia en que se recibe el trabajo. Acotado por R14."}],"hereda":[{"n":"id","t":"String"},{"n":"nombre","t":"String"},{"n":"fecha","t":"Date"},{"n":"porcentaje","t":"Number"},{"n":"instrucciones","t":"String"}],"sale":[],"entra":[],"hijos":[],"restr":["R2","R4","R14"],"vp":true,"vpRazon":"","insts":["taller1"]},{"n":"TrabajoGrupal","picto":"tareagrupo","padre":"Evaluacion","desc":"Evaluacion que un grupo de trabajo realiza fuera de clase. Su calificacion cuelga del grupo y no de las personas.","sin":"Proyecto, taller grupal","simbolo":"Hoja con dos siluetas. Es lo que un grupo entrega, y por eso su nota cuelga del grupo.","attrs":[{"n":"descripcion","t":"String","d":"Descripcion del trabajo que se pide al grupo."},{"n":"fechaEntrega","t":"Date","d":"Dia en que se recibe el trabajo. Acotado por R14."}],"hereda":[{"n":"id","t":"String"},{"n":"nombre","t":"String"},{"n":"fecha","t":"Date"},{"n":"porcentaje","t":"Number"},{"n":"instrucciones","t":"String"}],"sale":[{"rol":"grupos","a":"GrupoDeTrabajo","m":"1..*","d":"Un trabajo grupal se evalua sobre grupos concretos de la materia."}],"entra":[],"hijos":[],"restr":["R2","R4","R7","R8","R14"],"vp":true,"vpRazon":"","insts":["proyecto"]},{"n":"Rubrica","picto":"rubrica","padre":null,"desc":"Instrumento de juicio asociado a una evaluacion: reune el conjunto de criterios con los que se valora el desempeno.","sin":"Matriz de evaluacion, pauta","simbolo":"Cuadricula con un visto. Es el instrumento con el que se juzga una evaluacion.","attrs":[{"n":"id","t":"String","d":"Identificador de la rubrica."},{"n":"nombre","t":"String","d":"Nombre del instrumento."},{"n":"descripcion","t":"String","d":"Que pretende medir la rubrica."}],"hereda":[],"sale":[{"rol":"criterios","a":"CriterioRubrica","m":"1..*","d":"Una rubrica es exactamente su conjunto de criterios; los criterios no existen fuera de ella."},{"rol":"fuente","a":"FuenteInformacion","m":"1","d":"El soporte donde vive la rubrica. En la situacion actual es un archivo de Excel, y por eso la rubrica no esta en el mismo sitio que la nota que produce."}],"entra":[{"rol":"rubrica","de":"Evaluacion","m":"1"}],"hijos":[],"restr":["R11","R13"],"vp":false,"vpRazon":"El profesor ya sabe con que rubrica califico. Lo que le falta no es el instrumento sino el detalle del desempeno, y ese detalle no esta en la rubrica sino en lo que la Calificacion guarda de ella.","insts":["rubParcial","rubTaller","rubProyecto"]},{"n":"CriterioRubrica","picto":"criterio","padre":null,"desc":"Aspecto observable del desempeno que una rubrica exige juzgar por separado, con su peso y su puntaje maximo.","sin":"Criterio, item de la rubrica, dimension","simbolo":"Renglon con una estrella. Es un aspecto del desempeno que la rubrica exige juzgar por separado.","attrs":[{"n":"id","t":"String","d":"Identificador del criterio."},{"n":"nombre","t":"String","d":"Nombre del criterio."},{"n":"descripcion","t":"String","d":"Que se observa en ese criterio."},{"n":"porcentaje","t":"Number","d":"Peso del criterio dentro de la rubrica. Acotado por R11 y R13."},{"n":"puntajeMaximo","t":"Number","d":"Puntaje mas alto que se puede obtener en el criterio. Acotado por R13."}],"hereda":[],"sale":[],"entra":[{"rol":"criterios","de":"Rubrica","m":"1..*"}],"hijos":[],"restr":["R11","R13"],"vp":false,"vpRazon":"Mismo motivo. Ademas, la Calificacion no guarda el puntaje obtenido por criterio, de modo que traer los criterios al punto de vista no agregaria ningun dato que el profesor pueda consultar.","insts":["cri1","cri2","cri3","cri4","cri5","cri6"]},{"n":"Calificacion","picto":"nota","padre":null,"desc":"Nota que se registra sobre una evaluacion, con su comentario, su fecha, quien la emitio y el soporte donde queda guardada.","sin":"Nota, valoracion","simbolo":"Hoja con un numero encerrado. Es la nota registrada, con su comentario y su fecha.","attrs":[{"n":"id","t":"String","d":"Identificador de la calificacion."},{"n":"nota","t":"Number","d":"Valor registrado. Acotado por R12."},{"n":"comentarios","t":"String","d":"Retroalimentacion que acompana la nota."},{"n":"fecha","t":"Date","d":"Dia en que la nota queda registrada. Acotado por R14."}],"hereda":[],"sale":[{"rol":"evaluacion","a":"Evaluacion","m":"1","d":"La calificacion no significa nada sin saber que evaluacion califica."},{"rol":"calificadorProfesor","a":"Profesor","m":"0..1","d":"Deja constancia de cuando la nota la firma el profesor. Es la mitad del reparto del juicio que describe el testimonio."},{"rol":"calificadorMonitor","a":"Monitor","m":"0..1","d":"Deja constancia de cuando la nota la firma un monitor. Es la otra mitad del reparto."},{"rol":"fuente","a":"FuenteInformacion","m":"1","d":"Toda nota queda guardada en algun soporte. En la situacion actual, el LMS."}],"entra":[{"rol":"calificacionesGrupales","de":"GrupoDeTrabajo","m":"0..*"},{"rol":"calificaciones","de":"Estudiante","m":"0..*"}],"hijos":[],"restr":["R1","R2","R3","R4","R5","R12","R14"],"vp":true,"vpRazon":"","insts":["notaAnaP1","notaBrianP1","notaCamilaP1","notaDiegoP1","notaAnaT1","notaBrianT1","notaCamilaT1","notaGrupo1","notaGrupo2"]},{"n":"Participacion","picto":"mano","padre":null,"desc":"Intervencion de un estudiante durante la clase. Es la evidencia que, segun el testimonio, hoy no queda registrada en ninguna parte: por eso su fuente es opcional.","sin":"Intervencion en clase, aporte","simbolo":"Mano levantada. Es la intervencion del estudiante en clase, la evidencia que hoy no se guarda.","attrs":[{"n":"id","t":"String","d":"Identificador de la participacion."},{"n":"fecha","t":"Date","d":"Dia de la sesion en que ocurre. Acotado por R14."},{"n":"descripcion","t":"String","d":"Que se observo."},{"n":"tipo","t":"TipoParticipacion","d":"Escenario de la participacion. Valor tomado de TipoParticipacion."}],"hereda":[],"sale":[{"rol":"fuente","a":"FuenteInformacion","m":"0..1","d":"Admite cero: es la unica asociacion opcional a una fuente, y representa la participacion que hoy no queda registrada en ninguna parte."}],"entra":[{"rol":"participaciones","de":"Estudiante","m":"0..*"}],"hijos":[],"restr":["R14"],"vp":true,"vpRazon":"","insts":["partAna1","partAna2","partCamila1","partCamila2","partBrian1"]},{"n":"Interaccion","picto":"sobre","padre":null,"desc":"Intercambio entre un estudiante y el profesor por fuera de la clase, tipicamente un correo.","sin":"Comunicacion, correo del estudiante, asesoria","simbolo":"Sobre cerrado. Es el correo o la asesoria entre el estudiante y el profesor.","attrs":[{"n":"id","t":"String","d":"Identificador de la interaccion."},{"n":"fecha","t":"Date","d":"Dia en que ocurre. Acotado por R14."},{"n":"descripcion","t":"String","d":"Asunto del intercambio."},{"n":"tipo","t":"TipoInteraccion","d":"Canal del intercambio. Valor tomado de TipoInteraccion."}],"hereda":[],"sale":[{"rol":"fuente","a":"FuenteInformacion","m":"0..1","d":"Admite cero porque una asesoria presencial no queda en ningun soporte. Cuando el tipo es CORREO, R15 obliga a que la fuente exista."}],"entra":[{"rol":"interacciones","de":"Estudiante","m":"0..*"}],"hijos":[],"restr":["R14","R15"],"vp":true,"vpRazon":"","insts":["correoAna","correoCamila","asesoriaCamila"]},{"n":"FuenteInformacion","picto":"disco","padre":null,"desc":"Soporte donde queda guardado un dato academico o de interaccion. Es lo que hace visible que la informacion de un mismo estudiante vive partida por herramienta.","sin":"Repositorio, herramienta, sistema de origen","simbolo":"Cilindro de datos. Es el soporte donde queda guardado un registro: el LMS, un Excel o el buzon de correo.","attrs":[{"n":"id","t":"String","d":"Identificador de la fuente."},{"n":"nombre","t":"String","d":"Nombre del soporte."},{"n":"tipo","t":"TipoDeFuente","d":"Clase de soporte. Valor tomado de TipoDeFuente."}],"hereda":[],"sale":[],"entra":[{"rol":"fuente","de":"Rubrica","m":"1"},{"rol":"fuente","de":"Calificacion","m":"1"},{"rol":"fuente","de":"Participacion","m":"0..1"},{"rol":"fuente","de":"Interaccion","m":"0..1"}],"hijos":[],"restr":["R15"],"vp":true,"vpRazon":"","insts":["bloqueNeon","excelRubricas","buzonProfesor"]}],"enums":[{"n":"TipoDeFuente","vals":["LMS","EXCEL","CORREO"],"d":"Clase de soporte donde queda un registro. Son las tres herramientas que el testimonio nombra."},{"n":"TipoInteraccion","vals":["CORREO","ASESORIA"],"d":"Canal por el que ocurre la interaccion con el profesor."},{"n":"TipoParticipacion","vals":["EN_CLASE","EN_FORO"],"d":"Escenario en que ocurre la participacion del estudiante."},{"n":"TipoPregunta","vals":["ABIERTA","CERRADA","MIXTA"],"d":"Forma de las preguntas de un parcial."},{"n":"TipoPrograma","vals":["PREGRADO","MAESTRIA"],"d":"Nivel del programa al que pertenece la materia."}],"restr":[{"id":"R1","cl":"Estructura","t":"Toda Calificacion es alcanzada por exactamente un Estudiante (rol calificaciones) o por exactamente un GrupoDeTrabajo (rol calificacionesGrupales), nunca por ambos ni por ninguno."},{"id":"R2","cl":"Estructura","t":"Si la Evaluacion de una Calificacion es un TrabajoGrupal, el dueno de esa Calificacion es un GrupoDeTrabajo. Si es un Parcial o un TrabajoIndividual, el dueno es un Estudiante."},{"id":"R3","cl":"Estructura","t":"Toda Calificacion tiene definido exactamente uno de calificadorProfesor o calificadorMonitor, nunca los dos ni ninguno."},{"id":"R4","cl":"Estructura","t":"El calificadorProfesor de la Calificacion de un Parcial es el Profesor de la misma Materia. El calificador de un TrabajoIndividual o de un TrabajoGrupal es el Profesor o un Monitor de esa Materia."},{"id":"R5","cl":"Estructura","t":"Para un mismo Estudiante y una misma Evaluacion hay a lo sumo una Calificacion."},{"id":"R6","cl":"Estructura","t":"Los Estudiante integrantes de un GrupoDeTrabajo son estudiantes de la misma Materia que tiene ese GrupoDeTrabajo."},{"id":"R7","cl":"Estructura","t":"Los GrupoDeTrabajo de un TrabajoGrupal son grupos de la misma Materia que tiene ese TrabajoGrupal."},{"id":"R8","cl":"Estructura","t":"Un Estudiante esta en a lo sumo un GrupoDeTrabajo por cada TrabajoGrupal."},{"id":"R9","cl":"Estructura","t":"Ningun Estudiante comparte correo con el Profesor ni con un Monitor de la misma Materia."},{"id":"R10","cl":"Atributos","t":"La suma de porcentaje de las Evaluacion de una misma Materia es 100."},{"id":"R11","cl":"Atributos","t":"La suma de porcentaje de los CriterioRubrica de una misma Rubrica es 100."},{"id":"R12","cl":"Atributos","t":"La nota de una Calificacion esta entre 0 y 5."},{"id":"R13","cl":"Atributos","t":"porcentaje mayor que cero en Evaluacion y en CriterioRubrica. puntajeMaximo mayor que cero en CriterioRubrica. totalPreguntas y duracionEnMinutos mayores que cero en Parcial. semestre entre 1 y 12 en Estudiante."},{"id":"R14","cl":"Atributos","t":"La fecha de una Calificacion no es anterior a la fecha de su Evaluacion. La fechaEntrega de un TrabajoIndividual o de un TrabajoGrupal no es anterior a la fecha de esa Evaluacion. La fecha de una Participacion y la de una Interaccion estan dentro del periodo de la Materia."},{"id":"R15","cl":"Atributos","t":"Si el tipo de una Interaccion es CORREO, su FuenteInformacion esta definida y el tipo de esa FuenteInformacion es CORREO."},{"id":"R16","cl":"Atributos","t":"El id es unico entre las instancias de un mismo concepto."}],"fuera":[{"r":"Los valores de tipoPrograma, tipoPregunta, tipo de Participacion, tipo de Interaccion y tipo de FuenteInformacion","d":"los fijan las cinco enumeraciones, que ya estan dibujadas"},{"r":"Que un CriterioRubrica pertenezca a una sola Rubrica","d":"lo fija la multiplicidad de la asociacion criterios"},{"r":"Que toda Evaluacion tenga exactamente una Rubrica","d":"lo fija la multiplicidad 1 de la asociacion rubrica"},{"r":"Que un GrupoDeTrabajo tenga al menos dos integrantes","d":"lo fija la multiplicidad 2..* de la asociacion integrante"},{"r":"Que un Parcial, un TrabajoIndividual y un TrabajoGrupal tengan id, nombre, fecha, porcentaje e instrucciones","d":"lo fijan las tres herencias, que apuntan al padre Evaluacion"},{"r":"Que una Participacion pueda no tener fuente","d":"lo fija la multiplicidad 0..1 de la asociacion fuente"}],"lengVar":[{"v":"Forma del simbolo","c":"el concepto","d":"Cada uno de los quince conceptos tiene su pictograma. Las cuatro evaluaciones comparten la hoja y las tres personas comparten la silueta, de modo que las familias se reconocen antes de leer la etiqueta."},{"v":"Encabezado de la ficha","c":"la instancia y su concepto","d":"Se escribe nombre : Concepto, con el pictograma al lado."},{"v":"Renglon dentro de la ficha","c":"los atributos","d":"Cada atributo va como nombre = valor, en el orden en que el metamodelo los declara."},{"v":"Flecha con punta llena","c":"una asociacion instanciada","d":"Lleva escrito el rol del metamodelo. Va del origen al destino, nunca al reves."},{"v":"Ficha de borde punteado","c":"la misma instancia, repetida","d":"Conserva su nombre, luego es la misma instancia. Se repite para no cruzar lineas; no altera el conteo."},{"v":"Banda horizontal","c":"el nivel de la instancia en el modelo","d":"Arriba la materia, debajo las personas y el plan de evaluacion, despues las notas y las evidencias, y al final las fuentes."},{"v":"Marca de hueco","c":"una asociacion opcional que vale cero","d":"Un rombo vacio junto a la ficha senala que ahi no hay ninguna instancia, aunque el metamodelo la permita. Es lo que hace visible lo que hoy no se registra."}],"problemas":[{"id":"P1","t":"La participacion no se registra en ninguna parte","cita":"hoy no la registro en ninguna parte. Me doy cuenta en clase de quien habla y quien no, pero eso se queda en mi cabeza","conc":"Participacion.fuente es la unica asociacion opcional hacia FuenteInformacion, y en el modelo las tres participaciones en clase la dejan en cero","cons":"La mitad de la evidencia de presencia existe solo en la memoria del profesor y desaparece al terminar la clase"},{"id":"P2","t":"La nota de un trabajo grupal no es atribuible a nadie","cita":"mis monitores me ayudan a calificar los trabajos que los estudiantes hacen fuera de clase, individuales y grupales","conc":"calificacionesGrupales sale de GrupoDeTrabajo y no de Estudiante: no hay ningun camino del metamodelo que lleve de un Estudiante a la nota de un TrabajoGrupal","cons":"El 35 por ciento de la nota del periodo no aparece en la linea individual de ningun estudiante"},{"id":"P3","t":"La rubrica produce una sola nota y no un perfil","cita":"aunque califico con una rubrica y doy una nota, no tengo una vision clara y personalizada del desempeno individual","conc":"Calificacion solo guarda nota, comentarios y fecha. CriterioRubrica tiene puntajeMaximo pero no existe ningun concepto que guarde el puntaje obtenido por criterio","cons":"El detalle que la rubrica si distingue al momento de calificar se pierde al registrarlo: queda un solo numero"},{"id":"P4","t":"La informacion vive partida por herramienta","cita":"las rubricas estan en Excel, las notas en el LMS, e incluso los correos de los estudiantes quedan en mi buzon","conc":"FuenteInformacion con la enumeracion TipoDeFuente de tres valores, y tres asociaciones fuente que salen de Calificacion, Participacion e Interaccion hacia instancias distintas","cons":"Ver a un estudiante completo exige abrir tres herramientas y cruzarlas a mano"},{"id":"P5","t":"No hay una capa que integre lo academico con la interaccion","cita":"no existe una capa que unifique la informacion academica y la de interaccion para generar analitica simple: tendencias, alertas, diagnosticos","conc":"Ningun concepto del metamodelo agrega notas, participaciones e interacciones de un mismo estudiante. El unico punto donde coinciden es el propio Estudiante, y solo como tres listas sueltas","cons":"No se puede construir ninguna alerta: no hay donde calcularla ni donde guardarla"},{"id":"P6","t":"La deteccion temprana llega tarde o no llega","cita":"quisiera poder detectar a tiempo quien se esta quedando atras, o quien esta participando poco, pero todo esta disperso y es dificil de integrar","conc":"En el modelo, Diego Lara tiene una sola Calificacion, cero Participacion y cero Interaccion. Los tres ceros son legales para el metamodelo y hoy nadie los mira juntos","cons":"El caso que mas urge es justamente el que no genera ningun registro"},{"id":"P7","t":"Cada periodo arranca sin historia","cita":"cada semestre tengo un reto enorme","conc":"Materia.periodo hace que cada dictado sea una instancia distinta, y no hay ninguna asociacion entre dictados ni entre un Estudiante y otra Materia","cons":"Lo aprendido sobre un estudiante o sobre el plan de evaluacion no se acumula de un semestre al siguiente"}],"supuestos":[{"id":"S1","t":"El alcance es un dictado, no la universidad entera","raz":"El testimonio es de un profesor de catedra hablando de sus clases y de su semestre; no menciona programas, facultades ni otros cursos","para":"Deja a Materia como concepto raiz y evita inventar una jerarquia academica que nadie pidio","falso":"Si se quisiera comparar entre cursos, habria que anadir un concepto por encima de Materia; el resto del metamodelo no cambia"},{"id":"S2","t":"Toda evaluacion se califica con una rubrica","raz":"El profesor dice califico con una rubrica y no distingue evaluaciones con y sin rubrica","para":"Permite fijar la multiplicidad 1 en la asociacion rubrica y sostener la restriccion R11 sobre la suma de porcentajes","falso":"Si alguna evaluacion no tuviera rubrica, la multiplicidad pasaria a 0..1 y R11 solo aplicaria donde exista"},{"id":"S3","t":"La participacion tiene dos escenarios: la clase y el foro","raz":"El testimonio solo nombra la clase, pero el LMS existe y el foro es donde esa misma evidencia si quedaria guardada","para":"Hace que el contraste sea visible: la misma Participacion deja rastro o no segun donde ocurra","falso":"Si solo existiera la clase, la enumeracion TipoParticipacion sobraria y la asociacion fuente seria siempre cero"},{"id":"S4","t":"Los parciales los califica el profesor y los trabajos tambien los pueden calificar los monitores","raz":"Es literal del testimonio: mis monitores me ayudan a calificar los trabajos, yo me encargo de los parciales","para":"Sostiene R4, que es la regla que reparte el juicio y explica por que hay dos roles de calificador","falso":"Si el reparto fuera otro, cambia R4 pero no la estructura: los dos roles siguen siendo necesarios"},{"id":"S5","t":"Un grupo de trabajo tiene al menos dos integrantes","raz":"Es lo que hace que un trabajo sea grupal; un grupo de uno seria un trabajo individual","para":"Fija la multiplicidad 2..* y permite que el metamodelo distinga de verdad TrabajoIndividual de TrabajoGrupal","falso":"Si se admitieran grupos de uno, la distincion entre los dos tipos de trabajo dejaria de sostenerse sola"},{"id":"S6","t":"Las tres herramientas del testimonio son las unicas fuentes","raz":"El profesor nombra Excel, el LMS y su buzon, y dice explicitamente que no hay nada que las integre","para":"Fija la enumeracion TipoDeFuente en tres valores y hace que el modelo muestre la dispersion sin inventar sistemas","falso":"Agregar una cuarta herramienta solo agrega un valor a la enumeracion; el metamodelo no cambia"},{"id":"S7","t":"La nota va de 0 a 5","raz":"Es la escala de la universidad y el testimonio no menciona otra","para":"Permite escribir R12 y hace que el modelo instanciado sea verificable","falso":"Con otra escala cambia el rango de R12 y nada mas"},{"id":"S8","t":"El plan de evaluacion suma 100 por ciento dentro del periodo","raz":"Es la practica estandar de un curso y el profesor habla de un plan con parciales y trabajos","para":"Sostiene R10 y permite que la vista muestre cuanto de la nota ya esta definido y cuanto falta","falso":"Si el plan no sumara 100, la columna de porcentaje acumulado de la vista dejaria de tener sentido"},{"id":"S9","t":"El estudiante es la unidad de seguimiento, no el grupo","raz":"El profesor pide una vision personalizada del desempeno individual","para":"Es lo que justifica el punto de vista y lo que convierte la nota grupal en un hallazgo en lugar de en un detalle","falso":"Si el interes fuera el rendimiento por grupo, el punto de vista cambiaria de raiz"}],"accionables":[{"id":"A1","t":"Registrar la participacion en clase en el mismo soporte donde ya estan las notas","dec":"Si la registra el profesor durante la clase o un monitor despues, y si se captura por sesion o por intervencion","pre":"Acordar una lista de sesiones del periodo y un modo de captura que no interrumpa la clase","ev":"Participacion deja de tener fuente en cero: es el primer dato nuevo que el tablero puede mostrar"},{"id":"A2","t":"Guardar el puntaje obtenido por criterio y no solo la nota final","dec":"Si se agrega un concepto entre Calificacion y CriterioRubrica o si se amplia Calificacion con una lista de puntajes","pre":"Que las rubricas del Excel ya tengan los criterios con su peso, que es el caso","ev":"Un perfil por criterio en lugar de un numero: es lo que el profesor llama vision personalizada"},{"id":"A3","t":"Decidir como se atribuye a cada integrante la nota de un trabajo grupal","dec":"Si la nota grupal se hereda igual para todos, si se pondera con una coevaluacion o si se deja explicitamente fuera del seguimiento individual","pre":"Acordarlo con los estudiantes antes de la siguiente entrega grupal","ev":"El 35 por ciento del plan entra o sale del seguimiento individual de forma declarada, no por omision"},{"id":"A4","t":"Unificar el identificador del estudiante entre el LMS, el Excel y el correo","dec":"Cual de los tres identificadores queda como el bueno: el codigo del LMS o el correo institucional","pre":"Exportar las tres fuentes y medir cuantos registros no cruzan","ev":"Sin esto ninguna integracion posterior es posible: es la precondicion de todo lo demas"},{"id":"A5","t":"Definir los umbrales de la alerta antes de construirla","dec":"Que significa quedarse atras y que significa participar poco: cuantas decimas por debajo del grupo y cuantas sesiones sin intervenir","pre":"Tener al menos un periodo de datos para calibrar, o aceptar un umbral provisional y revisarlo","ev":"Una regla escrita que el profesor pueda discutir antes de que la programe nadie"},{"id":"A6","t":"Levantar el inventario de lo que hoy hay en cada herramienta","dec":"Que se migra, que se deja donde esta y que se deja de usar","pre":"Acceso de lectura al LMS y al Excel del periodo en curso","ev":"Un mapa de que dato vive donde, que es lo que hoy no existe y lo que hace que integrar sea adivinar"},{"id":"A7","t":"Validar el tablero de la vista de consulta con el profesor en una sesion","dec":"Si las cinco columnas son las correctas y si falta alguna que el profesor mira y nosotros no vimos","pre":"Tener el tablero poblado con datos de un dictado real, aunque sea cargado a mano","ev":"La confirmacion de que el punto de vista responde su pregunta, antes de invertir en construir nada"}],"toca":{"P1":["Participacion","FuenteInformacion"],"P2":["GrupoDeTrabajo","Calificacion","TrabajoGrupal"],"P3":["Calificacion","Rubrica","CriterioRubrica"],"P4":["FuenteInformacion","Calificacion","Participacion","Interaccion","Rubrica"],"P5":["Estudiante","Calificacion","Participacion","Interaccion"],"P6":["Estudiante","Calificacion","Participacion","Interaccion"],"P7":["Materia"]},"vpAtrib":[{"k":"Evaluacion . instrucciones","d":"Es el enunciado que se le da al estudiante. No aporta nada a la pregunta de quien se esta quedando atras."},{"k":"Materia . tipoPrograma","d":"El nivel del programa no distingue a un estudiante de otro dentro de la misma materia."}],"materia":{"id":"ISIS-4426","nombre":"Arquitectura Empresarial","tipoPrograma":"PREGRADO","periodo":"2026-20","nombre_i":"arqEmpresarial"},"evals":[{"n":"parcial1","c":"Parcial","nom":"Parcial 1","pct":"40","fecha":"11/09/2026","grupal":false},{"n":"taller1","c":"TrabajoIndividual","nom":"Taller individual 1","pct":"25","fecha":"28/08/2026","grupal":false},{"n":"proyecto","c":"TrabajoGrupal","nom":"Proyecto grupal","pct":"35","fecha":"18/09/2026","grupal":true}],"tablero":[{"i":"ana","nom":"Ana Torres","prog":"Ingenieria de Sistemas","sem":"7","correo":"a.torres@uniandes.edu.co","notas":{"parcial1":{"nota":"4.5","com":"Buen manejo conceptual","f":"20/09/2026","i":"notaAnaP1","firma":"profeCatedra","fuente":"bloqueNeon"},"taller1":{"nota":"4.2","com":"Analisis solido","f":"08/09/2026","i":"notaAnaT1","firma":"monLaura","fuente":"bloqueNeon"}},"grupal":{"nota":"4.4","grupo":"grupo1","i":"notaGrupo1","firma":"monLaura"},"parts":[{"i":"partAna1","tipo":"EN_CLASE","f":"19/08/2026","d":"Pregunta por la diferencia entre capacidad y proceso","fuente":null},{"i":"partAna2","tipo":"EN_CLASE","f":"02/09/2026","d":"Aporta un ejemplo de su practica","fuente":null}],"inters":[{"i":"correoAna","tipo":"CORREO","f":"05/09/2026","d":"Duda sobre el alcance del taller","fuente":"buzonProfesor"}],"prom":4.38,"cob":65,"falta":[]},{"i":"brian","nom":"Brian Gomez","prog":"Ingenieria Industrial","sem":"6","correo":"b.gomez@uniandes.edu.co","notas":{"parcial1":{"nota":"3.4","com":"Argumenta poco las respuestas","f":"20/09/2026","i":"notaBrianP1","firma":"profeCatedra","fuente":"bloqueNeon"},"taller1":{"nota":"3.8","com":"Escritura mejorable","f":"08/09/2026","i":"notaBrianT1","firma":"monLaura","fuente":"bloqueNeon"}},"grupal":{"nota":"4.4","grupo":"grupo1","i":"notaGrupo1","firma":"monLaura"},"parts":[{"i":"partBrian1","tipo":"EN_FORO","f":"23/09/2026","d":"Comenta la lectura en el foro","fuente":"bloqueNeon"}],"inters":[],"prom":3.55,"cob":65,"falta":[]},{"i":"camila","nom":"Camila Soto","prog":"Ingenieria de Sistemas","sem":"8","correo":"c.soto@uniandes.edu.co","notas":{"parcial1":{"nota":"4.7","com":"Muy completo","f":"20/09/2026","i":"notaCamilaP1","firma":"profeCatedra","fuente":"bloqueNeon"},"taller1":{"nota":"4.6","com":"Buen caso escogido","f":"09/09/2026","i":"notaCamilaT1","firma":"monJulian","fuente":"bloqueNeon"}},"grupal":{"nota":"3.9","grupo":"grupo2","i":"notaGrupo2","firma":"monJulian"},"parts":[{"i":"partCamila1","tipo":"EN_CLASE","f":"26/08/2026","d":"Discute el alcance de un caso","fuente":null},{"i":"partCamila2","tipo":"EN_FORO","f":"10/09/2026","d":"Responde el hilo de la semana","fuente":"bloqueNeon"}],"inters":[{"i":"correoCamila","tipo":"CORREO","f":"21/09/2026","d":"Pide retroalimentacion del parcial","fuente":"buzonProfesor"},{"i":"asesoriaCamila","tipo":"ASESORIA","f":"24/09/2026","d":"Asesoria presencial del proyecto","fuente":null}],"prom":4.66,"cob":65,"falta":[]},{"i":"diego","nom":"Diego Lara","prog":"Administracion","sem":"5","correo":"d.lara@uniandes.edu.co","notas":{"parcial1":{"nota":"2.6","com":"Falla en los conceptos base","f":"20/09/2026","i":"notaDiegoP1","firma":"profeCatedra","fuente":"bloqueNeon"}},"grupal":{"nota":"3.9","grupo":"grupo2","i":"notaGrupo2","firma":"monJulian"},"parts":[],"inters":[],"prom":2.6,"cob":40,"falta":["taller1"]}],"nosabe":{"ana":"Cuánto de la nota del proyecto es suya. Sus dos intervenciones en clase no quedaron en ningún soporte.","brian":"Si participó alguna vez en clase: no hay registro, ni de que sí ni de que no. Cuánto aportó al proyecto.","camila":"Cuánto de la nota del proyecto es suya. La asesoría del 24 de septiembre no dejó rastro.","diego":"Por qué no entregó el taller. Si asiste a clase. Si el 2.6 es un mal día o una tendencia."},"inst":[{"i":"arqEmpresarial","c":"Materia","v":{"id":"ISIS-4426","nombre":"Arquitectura Empresarial","tipoPrograma":"PREGRADO","periodo":"2026-20"}},{"i":"profeCatedra","c":"Profesor","v":{"id":"P-001","nombre":"Carlos Bermudez","correo":"c.bermudez@uniandes.edu.co","especialidad":"Arquitectura Empresarial"}},{"i":"monLaura","c":"Monitor","v":{"id":"M-001","nombre":"Laura Rios","correo":"l.rios@uniandes.edu.co"}},{"i":"monJulian","c":"Monitor","v":{"id":"M-002","nombre":"Julian Pardo","correo":"j.pardo@uniandes.edu.co"}},{"i":"ana","c":"Estudiante","v":{"id":"E-001","nombre":"Ana Torres","correo":"a.torres@uniandes.edu.co","programa":"Ingenieria de Sistemas","semestre":"7"}},{"i":"brian","c":"Estudiante","v":{"id":"E-002","nombre":"Brian Gomez","correo":"b.gomez@uniandes.edu.co","programa":"Ingenieria Industrial","semestre":"6"}},{"i":"camila","c":"Estudiante","v":{"id":"E-003","nombre":"Camila Soto","correo":"c.soto@uniandes.edu.co","programa":"Ingenieria de Sistemas","semestre":"8"}},{"i":"diego","c":"Estudiante","v":{"id":"E-004","nombre":"Diego Lara","correo":"d.lara@uniandes.edu.co","programa":"Administracion","semestre":"5"}},{"i":"grupo1","c":"GrupoDeTrabajo","v":{"id":"G-001","nombre":"Grupo 1"}},{"i":"grupo2","c":"GrupoDeTrabajo","v":{"id":"G-002","nombre":"Grupo 2"}},{"i":"parcial1","c":"Parcial","v":{"id":"EV-01","nombre":"Parcial 1","fecha":"11/09/2026","porcentaje":"40","instrucciones":"Sin material de apoyo, individual","totalPreguntas":"8","tipoPregunta":"MIXTA","duracionEnMinutos":"90"}},{"i":"taller1","c":"TrabajoIndividual","v":{"id":"EV-02","nombre":"Taller individual 1","fecha":"28/08/2026","porcentaje":"25","instrucciones":"Entrega por el LMS antes de la fecha limite","descripcion":"Analisis de un caso de arquitectura","fechaEntrega":"04/09/2026"}},{"i":"proyecto","c":"TrabajoGrupal","v":{"id":"EV-03","nombre":"Proyecto grupal","fecha":"18/09/2026","porcentaje":"35","instrucciones":"Entrega unica por grupo, con sustentacion","descripcion":"Arquitectura de una organizacion real","fechaEntrega":"02/10/2026"}},{"i":"rubParcial","c":"Rubrica","v":{"id":"R-01","nombre":"Rubrica del Parcial 1","descripcion":"Juzga el manejo conceptual y la argumentacion"}},{"i":"rubTaller","c":"Rubrica","v":{"id":"R-02","nombre":"Rubrica del Taller 1","descripcion":"Juzga el analisis del caso y la escritura"}},{"i":"rubProyecto","c":"Rubrica","v":{"id":"R-03","nombre":"Rubrica del Proyecto","descripcion":"Juzga el producto y la sustentacion del grupo"}},{"i":"cri1","c":"CriterioRubrica","v":{"id":"C-01","nombre":"Manejo conceptual","descripcion":"Usa los conceptos del curso con precision","porcentaje":"60","puntajeMaximo":"5"}},{"i":"cri2","c":"CriterioRubrica","v":{"id":"C-02","nombre":"Argumentacion","descripcion":"Sostiene sus respuestas con razones","porcentaje":"40","puntajeMaximo":"5"}},{"i":"cri3","c":"CriterioRubrica","v":{"id":"C-03","nombre":"Analisis del caso","descripcion":"Identifica lo relevante del caso","porcentaje":"70","puntajeMaximo":"5"}},{"i":"cri4","c":"CriterioRubrica","v":{"id":"C-04","nombre":"Escritura","descripcion":"Redacta de forma clara y ordenada","porcentaje":"30","puntajeMaximo":"5"}},{"i":"cri5","c":"CriterioRubrica","v":{"id":"C-05","nombre":"Producto entregado","descripcion":"Completitud y calidad del entregable","porcentaje":"65","puntajeMaximo":"5"}},{"i":"cri6","c":"CriterioRubrica","v":{"id":"C-06","nombre":"Sustentacion","descripcion":"Defiende el trabajo ante preguntas","porcentaje":"35","puntajeMaximo":"5"}},{"i":"notaAnaP1","c":"Calificacion","v":{"id":"N-01","nota":"4.5","comentarios":"Buen manejo conceptual","fecha":"20/09/2026"}},{"i":"notaBrianP1","c":"Calificacion","v":{"id":"N-02","nota":"3.4","comentarios":"Argumenta poco las respuestas","fecha":"20/09/2026"}},{"i":"notaCamilaP1","c":"Calificacion","v":{"id":"N-03","nota":"4.7","comentarios":"Muy completo","fecha":"20/09/2026"}},{"i":"notaDiegoP1","c":"Calificacion","v":{"id":"N-04","nota":"2.6","comentarios":"Falla en los conceptos base","fecha":"20/09/2026"}},{"i":"notaAnaT1","c":"Calificacion","v":{"id":"N-05","nota":"4.2","comentarios":"Analisis solido","fecha":"08/09/2026"}},{"i":"notaBrianT1","c":"Calificacion","v":{"id":"N-06","nota":"3.8","comentarios":"Escritura mejorable","fecha":"08/09/2026"}},{"i":"notaCamilaT1","c":"Calificacion","v":{"id":"N-07","nota":"4.6","comentarios":"Buen caso escogido","fecha":"09/09/2026"}},{"i":"notaGrupo1","c":"Calificacion","v":{"id":"N-08","nota":"4.4","comentarios":"Entrega completa y bien sustentada","fecha":"09/10/2026"}},{"i":"notaGrupo2","c":"Calificacion","v":{"id":"N-09","nota":"3.9","comentarios":"Producto correcto, sustentacion floja","fecha":"09/10/2026"}},{"i":"partAna1","c":"Participacion","v":{"id":"PA-01","fecha":"19/08/2026","descripcion":"Pregunta por la diferencia entre capacidad y proceso","tipo":"EN_CLASE"}},{"i":"partAna2","c":"Participacion","v":{"id":"PA-02","fecha":"02/09/2026","descripcion":"Aporta un ejemplo de su practica","tipo":"EN_CLASE"}},{"i":"partCamila1","c":"Participacion","v":{"id":"PA-03","fecha":"26/08/2026","descripcion":"Discute el alcance de un caso","tipo":"EN_CLASE"}},{"i":"partCamila2","c":"Participacion","v":{"id":"PA-04","fecha":"10/09/2026","descripcion":"Responde el hilo de la semana","tipo":"EN_FORO"}},{"i":"partBrian1","c":"Participacion","v":{"id":"PA-05","fecha":"23/09/2026","descripcion":"Comenta la lectura en el foro","tipo":"EN_FORO"}},{"i":"correoAna","c":"Interaccion","v":{"id":"I-01","fecha":"05/09/2026","descripcion":"Duda sobre el alcance del taller","tipo":"CORREO"}},{"i":"correoCamila","c":"Interaccion","v":{"id":"I-02","fecha":"21/09/2026","descripcion":"Pide retroalimentacion del parcial","tipo":"CORREO"}},{"i":"asesoriaCamila","c":"Interaccion","v":{"id":"I-03","fecha":"24/09/2026","descripcion":"Asesoria presencial del proyecto","tipo":"ASESORIA"}},{"i":"bloqueNeon","c":"FuenteInformacion","v":{"id":"F-01","nombre":"Bloque Neon","tipo":"LMS"}},{"i":"excelRubricas","c":"FuenteInformacion","v":{"id":"F-02","nombre":"Rubricas_2026-20.xlsx","tipo":"EXCEL"}},{"i":"buzonProfesor","c":"FuenteInformacion","v":{"id":"F-03","nombre":"Buzon del profesor","tipo":"CORREO"}}],"enlaces":[{"a":"arqEmpresarial","r":"profesor","b":"profeCatedra"},{"a":"arqEmpresarial","r":"monitores","b":"monLaura"},{"a":"arqEmpresarial","r":"monitores","b":"monJulian"},{"a":"arqEmpresarial","r":"estudiantes","b":"ana"},{"a":"arqEmpresarial","r":"estudiantes","b":"brian"},{"a":"arqEmpresarial","r":"estudiantes","b":"camila"},{"a":"arqEmpresarial","r":"estudiantes","b":"diego"},{"a":"arqEmpresarial","r":"evaluaciones","b":"parcial1"},{"a":"arqEmpresarial","r":"evaluaciones","b":"taller1"},{"a":"arqEmpresarial","r":"evaluaciones","b":"proyecto"},{"a":"arqEmpresarial","r":"grupos","b":"grupo1"},{"a":"arqEmpresarial","r":"grupos","b":"grupo2"},{"a":"parcial1","r":"rubrica","b":"rubParcial"},{"a":"taller1","r":"rubrica","b":"rubTaller"},{"a":"proyecto","r":"rubrica","b":"rubProyecto"},{"a":"rubParcial","r":"criterios","b":"cri1"},{"a":"rubParcial","r":"criterios","b":"cri2"},{"a":"rubTaller","r":"criterios","b":"cri3"},{"a":"rubTaller","r":"criterios","b":"cri4"},{"a":"rubProyecto","r":"criterios","b":"cri5"},{"a":"rubProyecto","r":"criterios","b":"cri6"},{"a":"rubParcial","r":"fuente","b":"excelRubricas"},{"a":"rubTaller","r":"fuente","b":"excelRubricas"},{"a":"rubProyecto","r":"fuente","b":"excelRubricas"},{"a":"proyecto","r":"grupos","b":"grupo1"},{"a":"proyecto","r":"grupos","b":"grupo2"},{"a":"grupo1","r":"integrante","b":"ana"},{"a":"grupo1","r":"integrante","b":"brian"},{"a":"grupo2","r":"integrante","b":"camila"},{"a":"grupo2","r":"integrante","b":"diego"},{"a":"grupo1","r":"calificacionesGrupales","b":"notaGrupo1"},{"a":"grupo2","r":"calificacionesGrupales","b":"notaGrupo2"},{"a":"ana","r":"calificaciones","b":"notaAnaP1"},{"a":"ana","r":"calificaciones","b":"notaAnaT1"},{"a":"brian","r":"calificaciones","b":"notaBrianP1"},{"a":"brian","r":"calificaciones","b":"notaBrianT1"},{"a":"camila","r":"calificaciones","b":"notaCamilaP1"},{"a":"camila","r":"calificaciones","b":"notaCamilaT1"},{"a":"diego","r":"calificaciones","b":"notaDiegoP1"},{"a":"ana","r":"participaciones","b":"partAna1"},{"a":"ana","r":"participaciones","b":"partAna2"},{"a":"camila","r":"participaciones","b":"partCamila1"},{"a":"camila","r":"participaciones","b":"partCamila2"},{"a":"brian","r":"participaciones","b":"partBrian1"},{"a":"ana","r":"interacciones","b":"correoAna"},{"a":"camila","r":"interacciones","b":"correoCamila"},{"a":"camila","r":"interacciones","b":"asesoriaCamila"},{"a":"notaAnaP1","r":"evaluacion","b":"parcial1"},{"a":"notaBrianP1","r":"evaluacion","b":"parcial1"},{"a":"notaCamilaP1","r":"evaluacion","b":"parcial1"},{"a":"notaDiegoP1","r":"evaluacion","b":"parcial1"},{"a":"notaAnaT1","r":"evaluacion","b":"taller1"},{"a":"notaBrianT1","r":"evaluacion","b":"taller1"},{"a":"notaCamilaT1","r":"evaluacion","b":"taller1"},{"a":"notaGrupo1","r":"evaluacion","b":"proyecto"},{"a":"notaGrupo2","r":"evaluacion","b":"proyecto"},{"a":"notaAnaP1","r":"calificadorProfesor","b":"profeCatedra"},{"a":"notaBrianP1","r":"calificadorProfesor","b":"profeCatedra"},{"a":"notaCamilaP1","r":"calificadorProfesor","b":"profeCatedra"},{"a":"notaDiegoP1","r":"calificadorProfesor","b":"profeCatedra"},{"a":"notaAnaT1","r":"calificadorMonitor","b":"monLaura"},{"a":"notaBrianT1","r":"calificadorMonitor","b":"monLaura"},{"a":"notaCamilaT1","r":"calificadorMonitor","b":"monJulian"},{"a":"notaGrupo1","r":"calificadorMonitor","b":"monLaura"},{"a":"notaGrupo2","r":"calificadorMonitor","b":"monJulian"},{"a":"notaAnaP1","r":"fuente","b":"bloqueNeon"},{"a":"notaBrianP1","r":"fuente","b":"bloqueNeon"},{"a":"notaCamilaP1","r":"fuente","b":"bloqueNeon"},{"a":"notaDiegoP1","r":"fuente","b":"bloqueNeon"},{"a":"notaAnaT1","r":"fuente","b":"bloqueNeon"},{"a":"notaBrianT1","r":"fuente","b":"bloqueNeon"},{"a":"notaCamilaT1","r":"fuente","b":"bloqueNeon"},{"a":"notaGrupo1","r":"fuente","b":"bloqueNeon"},{"a":"notaGrupo2","r":"fuente","b":"bloqueNeon"},{"a":"partCamila2","r":"fuente","b":"bloqueNeon"},{"a":"partBrian1","r":"fuente","b":"bloqueNeon"},{"a":"correoAna","r":"fuente","b":"buzonProfesor"},{"a":"correoCamila","r":"fuente","b":"buzonProfesor"}],"huecos":[{"i":"partAna1","rol":"fuente","d":"la participacion en clase no queda en ningun soporte"},{"i":"partAna2","rol":"fuente","d":"la participacion en clase no queda en ningun soporte"},{"i":"partCamila1","rol":"fuente","d":"la participacion en clase no queda en ningun soporte"},{"i":"asesoriaCamila","rol":"fuente","d":"la asesoria presencial no deja registro"},{"i":"diego","rol":"participaciones","d":"ninguna participacion registrada en todo el periodo"},{"i":"diego","rol":"interacciones","d":"ningun correo ni asesoria en todo el periodo"},{"i":"diego","rol":"calificaciones (taller1)","d":"no hay Calificacion: el estudiante no entrego el taller y el vacio solo se nota al contar"}],"n":{"conceptos":15,"attrs":68,"attrsProp":53,"asoc":20,"esp":3,"enums":5,"restr":16,"inst":42,"enl":78,"vpC":10,"vpA":9,"huecos":7,"checks":82}}</script>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById("datos").textContent);
+var $ = function(s){ return document.querySelector(s); };
+var el = function(t, c, h){ var n=document.createElement(t);
+  if(c) n.className=c; if(h!=null) n.innerHTML=h; return n; };
+var esc = function(s){ return String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); };
+
+/* --------------------------------------------- motor de las diapositivas */
+var SL = [].slice.call(document.querySelectorAll(".slide"));
+var TOT = SL.length, act = 0, arrancado = false;
+var VOCES = [["inicio","Andrés"],["lenguaje","David Felipe"],
+  ["vista","Jose Carlos"]];
+var CORTEVOZ = VOCES.map(function(v){
+  var n = 0; SL.forEach(function(sec,k){ if(sec.id===v[0]) n = k; });
+  return [n, v[1]];
+});
+function vozDe(i){
+  var q = CORTEVOZ[0][1];
+  CORTEVOZ.forEach(function(c){ if(i >= c[0]) q = c[1]; });
+  return q;
+}
+var puntos = $("#puntos"), ixRej = $("#indiceRej");
+SL.forEach(function(sec,i){
+  var b = el("button"); b.dataset.i = i;
+  b.title = (i+1)+". "+sec.dataset.t;
+  b.setAttribute("aria-label", b.title);
+  b.addEventListener("click", function(){ vaA(i); });
+  puntos.appendChild(b);
+  var c = el("button","ix","<em>"+(i+1<10?"0":"")+(i+1)+"</em><span><b>"+
+    esc(sec.dataset.t)+"</b><span class='q'>"+esc(vozDe(i))+"</span></span>");
+  c.dataset.i = i;
+  c.addEventListener("click", function(){ vaA(i); cierraIdx(); });
+  ixRej.appendChild(c);
+});
+SL.forEach(function(sec,k){ if(k) sec.setAttribute("hidden",""); });
+function sube(sec){
+  sec.querySelectorAll(".cnt").forEach(function(e){
+    var fin = parseInt(e.dataset.n, 10);
+    if(isNaN(fin)) return;
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+      e.textContent = fin; return;
+    }
+    var t0 = 0, dur = 620;
+    function paso(t){
+      if(!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      e.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3)));
+      if(k < 1) requestAnimationFrame(paso);
+    }
+    e.textContent = "0";
+    requestAnimationFrame(paso);
+  });
+}
+function vaA(i, atras){
+  i = Math.max(0, Math.min(TOT-1, i));
+  if(i === act && !SL[i].hasAttribute("hidden") && arrancado) return;
+  arrancado = true;
+  if(typeof atras === "undefined") atras = i < act;
+  SL.forEach(function(sec,k){
+    if(k===i){ sec.removeAttribute("hidden"); sec.scrollTop = 0;
+      sec.classList.remove("entra","atras");
+      void sec.offsetWidth;
+      sec.classList.add("entra"); if(atras) sec.classList.add("atras");
+    } else sec.setAttribute("hidden","");
+  });
+  act = i;
+  $("#aqui").textContent = SL[i].dataset.t;
+  $("#nAct").textContent = i+1;
+  $("#voz").textContent = vozDe(i);
+  $("#barra").style.width = ((i+1)/TOT*100)+"%";
+  $("#btAnt").disabled = i===0;
+  $("#btSig").disabled = i===TOT-1;
+  puntos.querySelectorAll("button").forEach(function(b){
+    b.setAttribute("aria-current", +b.dataset.i===i ? "true":"false"); });
+  ixRej.querySelectorAll(".ix").forEach(function(b){
+    b.setAttribute("aria-current", +b.dataset.i===i ? "true":"false"); });
+  sube(SL[i]);
+  var a = puntos.querySelector('button[aria-current="true"]');
+  if(a) a.scrollIntoView({block:"nearest",inline:"nearest"});
+  try{ history.replaceState(null,"","#"+SL[i].id); }catch(e){}
+}
+$("#nTot").textContent = TOT;
+$("#ixTot").textContent = "Las " + TOT + " diapositivas";
+$("#btAnt").addEventListener("click", function(){ vaA(act-1, true); });
+$("#btSig").addEventListener("click", function(){ vaA(act+1, false); });
+
+var indice = $("#indice");
+function abreIdx(){ indice.removeAttribute("hidden");
+  $("#btIdx").setAttribute("aria-pressed","true"); }
+function cierraIdx(){ indice.setAttribute("hidden","");
+  $("#btIdx").setAttribute("aria-pressed","false"); }
+$("#btIdx").addEventListener("click", function(){
+  indice.hasAttribute("hidden") ? abreIdx() : cierraIdx(); });
+$("#btIdxX").addEventListener("click", cierraIdx);
+
+/* deslizar con el dedo */
+var tx=0, ty=0, td=0;
+$("#deck").addEventListener("touchstart", function(e){
+  if(e.touches.length!==1) return;
+  tx=e.touches[0].clientX; ty=e.touches[0].clientY; td=Date.now();
+}, {passive:true});
+$("#deck").addEventListener("touchend", function(e){
+  var t=e.changedTouches[0];
+  var dx=t.clientX-tx, dy=t.clientY-ty;
+  if(Date.now()-td < 600 && Math.abs(dx)>64 && Math.abs(dx)>Math.abs(dy)*1.7)
+    vaA(act + (dx<0 ? 1 : -1), dx>0);
+}, {passive:true});
+
+/* ----------------------------------------------------------------- tema */
+var btTema = $("#btTema");
+function temaAhora(){
+  var t = document.documentElement.getAttribute("data-theme");
+  if(t) return t;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark" : "light";
+}
+btTema.addEventListener("click", function(){
+  var n = temaAhora()==="dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", n);
+  try{ localStorage.setItem("arti-tema", n); }catch(e){}
+});
+try{ var g=localStorage.getItem("arti-tema");
+  if(g) document.documentElement.setAttribute("data-theme", g); }catch(e){}
+
+/* ------------------------------------------------------------ cronometro */
+var TOTSEG = 15*60, resta = TOTSEG, corre = false, tick = null;
+var cr = $("#crono"), btC = $("#btCrono");
+function pinta(){
+  var m = Math.floor(Math.abs(resta)/60), s = Math.abs(resta)%60;
+  cr.textContent = (resta<0?"-":"") + m + ":" + (s<10?"0":"") + s;
+  cr.className = "crono" + (resta<=0 ? " fin" : (corre ? " corre" : ""));
+}
+btC.addEventListener("click", function(){
+  if(corre){ clearInterval(tick); corre=false; btC.textContent="Seguir"; }
+  else{ corre=true; btC.textContent="Pausar";
+    tick=setInterval(function(){ resta--; pinta(); }, 1000); }
+  pinta();
+});
+cr.addEventListener("click", function(){ clearInterval(tick); corre=false;
+  resta=TOTSEG; btC.textContent="Iniciar"; pinta(); });
+cr.title = "Pulse el reloj para reiniciar los quince minutos";
+pinta();
+
+/* ------------------------------------------------- 2 · las tres razones */
+[["No hay registro","la participación en clase se queda en su cabeza",
+  "<code class='k'>Participacion.fuente</code> es la única asociación "+
+  "opcional del metamodelo. En el modelo, las tres participaciones en clase "+
+  "la dejan en cero; las dos del foro sí tienen fuente."],
+ ["Doy una nota","la rúbrica distingue, pero al registrar queda un número",
+  "<code class='k'>Calificacion</code> guarda nota, comentarios y fecha. "+
+  "Ningún concepto guarda el puntaje obtenido por criterio."],
+ ["Excel, LMS, buzón","la información del mismo alumno vive partida",
+  "Tres asociaciones <code class='k'>fuente</code>, desde Calificacion, "+
+  "Participacion e Interaccion, apuntan a tres instancias distintas de "+
+  "<code class='k'>FuenteInformacion</code>."]
+].forEach(function(r){
+  var c = el("button","caja tarj abrible");
+  c.innerHTML = "<h3>"+esc(r[0])+"</h3><p>"+esc(r[1])+"</p>"+
+    "<p class='oculto'>"+r[2]+"</p>";
+  c.addEventListener("click", function(){ c.classList.toggle("abierta"); });
+  $("#tresRazones").appendChild(c);
+});
+
+/* ------------------------------------------------ 3 · qué decidimos modelar */
+[["Materia es la raíz",
+  "El dictado concreto de una asignatura en un periodo. Nada por encima: el "+
+  "profesor habla de sus clases y de su semestre.",
+  "La consecuencia es que cada semestre arranca sin historia. No es un "+
+  "olvido, es el retrato."],
+ ["GrupoDeTrabajo es un concepto",
+  "Existe porque es lo que hace que la autoría de una entrega sea colectiva.",
+  "Al existir, obliga a que la nota grupal cuelgue de él. Ningún estudiante "+
+  "la alcanza."],
+ ["FuenteInformacion es un concepto",
+  "Excel, LMS y buzón no son conceptos: son tres instancias de la misma "+
+  "clase de cosa.",
+  "Así el modelo muestra que un mismo alumno tiene su información en tres "+
+  "sitios."]
+].forEach(function(d,i){
+  $("#decs").appendChild(el("div","caja tarj num-tarj",
+    "<span class='num'>"+(i+1)+"</span><h3>"+esc(d[0])+"</h3><p>"+esc(d[1])+
+    "</p><div class='guion'></div><p class='conse'>"+esc(d[2])+"</p>"));
+});
+
+/* ---------------------------------------------------------- 4 · metamodelo */
+function cif(n, t){ return "<span class='cnt' data-n='"+n+"'>0</span> "+t; }
+$("#mmCifras").innerHTML = [cif(D.n.conceptos,"conceptos"),
+  cif(D.n.attrs,"atributos"), cif(D.n.asoc,"asociaciones"),
+  cif(D.n.esp,"herencias"), cif(D.n.enums,"enumeraciones"),
+  cif(D.n.restr,"restricciones")].join(" · ");
+
+var MAT = D.conceptos.filter(function(c){ return c.n==="Materia"; })[0];
+var HIJ = D.conceptos.filter(function(c){ return c.padre; });
+var BLOQ = ["La forma del metamodelo contra las reglas de construcción",
+  "Los catálogos de conceptos, atributos y relaciones",
+  "La conformidad del modelo con el metamodelo",
+  "Las "+D.n.restr+" restricciones, evaluadas sobre los valores del modelo",
+  "La conformidad del punto de vista con el metamodelo",
+  "La conformidad de la vista con el punto de vista",
+  "Los artefactos de problemas, supuestos y accionables"];
+[["Raíz","Materia. Desde ella se alcanzan los otros catorce.",
+  "<ul class='det-lista'>"+MAT.sale.map(function(a){
+    return "<li><span class='mono'>"+esc(a.rol)+" &rarr; "+esc(a.a)+
+      "</span> <span class='k'>"+esc(a.m)+"</span></li>"; }).join("")+"</ul>"],
+ ["Herencias","Parcial, TrabajoIndividual y TrabajoGrupal, cada una con "+
+  "atributos propios.",
+  "<ul class='det-lista'>"+HIJ.map(function(c){
+    return "<li><span class='mono'>"+esc(c.n)+"</span> · "+
+      c.attrs.map(function(a){ return esc(a.n); }).join(", ")+"</li>";
+  }).join("")+"</ul>"],
+ ["Restricciones",D.n.restr+", ninguna dibujable y ninguna redactada como "+
+  "acción.",
+  "<ul class='det-lista alta'>"+D.restr.map(function(r){
+    return "<li><span class='mono' style='color:var(--lapiz)'>"+r.id+
+      "</span> "+esc(r.t)+"</li>"; }).join("")+"</ul>"],
+ ["Verificado",D.n.checks+" comprobaciones automáticas, 0 fallas.",
+  "<ul class='det-lista'>"+BLOQ.map(function(t){
+    return "<li>"+esc(t)+"</li>"; }).join("")+"</ul>"]
+].forEach(function(c){
+  var b = el("button","caja chica tarj abrible",
+    "<h3>"+esc(c[0])+"</h3><p>"+esc(c[1])+"</p><div class='oculto'>"+c[2]+
+    "</div>");
+  b.addEventListener("click", function(){ b.classList.toggle("abierta"); });
+  $("#mmCajas").appendChild(b);
+});
+
+/* ------------------------------------------------------------ 5 · lenguaje */
+var simDet = el("div","sim-det");
+D.conceptos.forEach(function(c){
+  var b = el("button","sim-celda",
+    "<img src='sim/"+c.picto+".png' alt=''><b>"+esc(c.n)+"</b>");
+  b.dataset.c = c.n;
+  b.addEventListener("click", function(){ pintaSim(c.n); });
+  $("#simtab").appendChild(b);
+});
+$("#simtab").parentNode.insertBefore(simDet, $("#simtab").nextSibling);
+function pintaSim(n){
+  var c = D.conceptos.filter(function(x){ return x.n===n; })[0];
+  $("#simtab").querySelectorAll(".sim-celda").forEach(function(b){
+    b.setAttribute("aria-pressed", b.dataset.c===n ? "true":"false"); });
+  simDet.innerHTML = "<img src='sim/"+c.picto+".png' alt=''>"+
+    "<div style='min-width:0'><h4>"+esc(c.n)+"</h4><p>"+esc(c.simbolo)+
+    "</p><p class='sinon'>Como lo llama el profesor: "+esc(c.sin)+
+    "</p></div>";
+}
+pintaSim("Materia");
+
+/* -------------------------------------------------------------- 6 · modelo */
+function fichaDe(id){
+  var f = D.tablero.filter(function(x){ return x.i===id; })[0];
+  if(!f) return "";
+  return "<div class='oculto'><ul class='det-lista'>"+
+    "<li><span class='mono'>"+esc(f.i)+" : Estudiante</span> · "+esc(f.prog)+
+    " · semestre "+esc(f.sem)+"</li>"+
+    "<li>calificaciones <span class='k'>"+Object.keys(f.notas).length+
+    "</span> · participaciones <span class='k'>"+f.parts.length+
+    "</span> · interacciones <span class='k'>"+f.inters.length+
+    "</span></li></ul></div>";
+}
+[["Diego Lara","Una sola nota, cero participaciones, cero correos. Los tres "+
+  "ceros son legales para el metamodelo.", fichaDe("diego")],
+ ["Brian Gómez","Participa, pero solo en el foro. Lo del foro queda en el "+
+  "LMS; lo de clase no queda en ninguna parte.", fichaDe("brian")],
+ ["El proyecto","Sus dos notas cuelgan de grupo1 y grupo2. Ningún estudiante "+
+  "las alcanza.",
+  "<div class='oculto'><ul class='det-lista'><li><span class='mono'>"+
+  "notaGrupo1, notaGrupo2 : Calificacion</span></li><li>cuelgan por "+
+  "<span class='mono'>GrupoDeTrabajo . calificacionesGrupales</span></li>"+
+  "</ul></div>"],
+ ["Las rúbricas","Apuntan al Excel; las nueve notas, al LMS. Instrumento y "+
+  "resultado en herramientas distintas.",
+  "<div class='oculto'><ul class='det-lista'><li>3 Rubrica · fuente = "+
+  "<span class='mono'>archivoExcel</span></li><li>9 Calificacion · fuente = "+
+  "<span class='mono'>bloqueNeon</span></li></ul></div>"]
+].forEach(function(h){
+  var b = el("button","rombo-item abrible",
+    "<span class='rombo'></span><div style='min-width:0'><b>"+esc(h[0])+
+    "</b><p>"+esc(h[1])+"</p>"+(h[2]||"")+"</div>");
+  b.addEventListener("click", function(){ b.classList.toggle("abierta"); });
+  $("#hallazgos").appendChild(b);
+});
+
+/* ------------------------------------------------------ 7 · punto de vista */
+$("#vpCifras").innerHTML = "La parte del metamodelo que contesta la "+
+  "pregunta del profesor: <span class='cnt' data-n='"+D.n.vpC+"'>0</span> de "+
+  D.n.conceptos+" conceptos y <span class='cnt' data-n='"+D.n.vpA+"'>0</span>"+
+  " de "+D.n.asoc+" asociaciones.";
+var fichasVp = el("div","vp-chips");
+D.conceptos.filter(function(c){ return c.vp; }).forEach(function(c){
+  fichasVp.appendChild(el("span","uno","<img src='sim/"+c.picto+
+    ".png' alt=''>"+esc(c.n)));
+});
+$("#vpCifras").parentNode.insertBefore(fichasVp, $("#vpCifras").nextSibling);
+
+/* --------------------------------------------------------------- 8 · vista */
+var tb = $("#tb"), det = $("#detTb");
+var evIndiv = D.evals.filter(function(e){ return !e.grupal; });
+var evGrup = D.evals.filter(function(e){ return e.grupal; })[0];
+tb.innerHTML = "<thead><tr><th>Estudiante</th>" +
+  evIndiv.map(function(e){ return "<th>"+esc(e.nom)+"<br>("+e.pct+" %)</th>"; }).join("") +
+  "<th>"+esc(evGrup.nom)+"<br>("+evGrup.pct+" %)</th>" +
+  "<th>Participaciones</th><th>Correos y asesorías</th>" +
+  "<th>Nota con lo que sí es suyo</th><th>Lo que hoy no se puede saber</th>" +
+  "</tr></thead><tbody>" + D.tablero.map(function(f){
+  var tds = "<td><div class='est'><b>"+esc(f.nom)+"</b><span>"+esc(f.prog)+
+    " · semestre "+esc(f.sem)+"</span><span class='mono' style='font-size:"+
+    "10.5px;color:var(--tinta-3)'>"+esc(f.i)+" : Estudiante</span></div></td>";
+  evIndiv.forEach(function(e){
+    var n = f.notas[e.n];
+    tds += n
+      ? "<td class='cel-cli' data-t='nota' data-e='"+f.i+"' data-ev='"+e.n+
+        "'><span class='nota'>"+esc(n.nota)+"</span><span class='sub si'>"+
+        "queda en el LMS</span></td>"
+      : "<td class='cel-cli' data-t='falta' data-e='"+f.i+"' data-ev='"+e.n+
+        "'><span class='sin'><span class='rombo'></span>sin calificación"+
+        "</span><span class='sub'>no hay ninguna instancia</span></td>";
+  });
+  tds += "<td class='cel-cli' data-t='grupal' data-e='"+f.i+
+    "'><span class='nota' style='color:var(--tinta-2)'>"+
+    esc(f.grupal?f.grupal.nota:"—")+"</span><span class='sub'>es la nota de "+
+    esc(f.grupal?f.grupal.grupo:"—")+"</span><span class='sin' style='"+
+    "margin-top:5px'><span class='rombo'></span>no cuelga de la persona"+
+    "</span></td>";
+  var tot = f.parts.length, cl = f.parts.filter(function(x){
+    return x.tipo==="EN_CLASE"; }).length;
+  tds += tot===0
+    ? "<td class='cel-cli' data-t='part' data-e='"+f.i+"'><span class='sin'>"+
+      "<span class='rombo'></span>ninguna</span><span class='sub'>ni en clase "+
+      "ni en el foro, en todo el periodo</span></td>"
+    : "<td class='cel-cli' data-t='part' data-e='"+f.i+"'><span class='nota'>"+
+      tot+"</span><span class='sub'>"+cl+" en clase · "+(tot-cl)+" en el foro"+
+      "</span>"+(cl?"<span class='sin' style='margin-top:5px'><span class="+
+      "'rombo'></span>las de clase no quedan</span>":"<span class='sub si'>"+
+      "quedan en el LMS</span>")+"</td>";
+  tds += f.inters.length===0
+    ? "<td class='cel-cli' data-t='int' data-e='"+f.i+"'><span class='sin'>"+
+      "<span class='rombo'></span>ninguno</span></td>"
+    : "<td class='cel-cli' data-t='int' data-e='"+f.i+"'><span class='nota'>"+
+      f.inters.length+"</span><span class='sub si'>quedan en el buzón</span></td>";
+  tds += "<td class='cel-cli' data-t='prom' data-e='"+f.i+
+    "'><span class='nota'>"+(f.prom!=null?f.prom.toFixed(2):"—")+
+    "</span><span class='sub'>sobre el "+f.cob+" % del plan que sí es "+
+    "individual</span>"+(f.cob<65?"<span class='sin' style='margin-top:5px'>"+
+    "<span class='rombo'></span>le falta una nota</span>":"")+"</td>";
+  tds += "<td style='max-width:250px;font-size:12.5px;line-height:1.45;"+
+    "color:var(--tinta-2)'>"+esc(D.nosabe[f.i]||"")+"</td>";
+  return "<tr data-e='"+f.i+"'>"+tds+"</tr>";
+}).join("") + "</tbody>";
+
+var RUTAS = {
+  nota:"Materia . estudiantes &rarr; Estudiante . calificaciones &rarr; "+
+    "Calificacion . evaluacion &rarr; Evaluacion",
+  falta:"Materia . estudiantes &rarr; Estudiante . calificaciones "+
+    "[0..*] = 0 para esa Evaluacion",
+  grupal:"GrupoDeTrabajo . calificacionesGrupales &rarr; Calificacion. No "+
+    "existe Estudiante &rarr; Calificacion de un TrabajoGrupal.",
+  part:"Materia . estudiantes &rarr; Estudiante . participaciones &rarr; "+
+    "Participacion . fuente [0..1]",
+  int:"Materia . estudiantes &rarr; Estudiante . interacciones &rarr; "+
+    "Interaccion . fuente [0..1]",
+  prom:"suma de Calificacion . nota por Evaluacion . porcentaje, sobre el "+
+    "porcentaje de las Evaluacion individuales que ya tienen nota"
+};
+tb.addEventListener("click", function(ev){
+  var td = ev.target.closest("td.cel-cli"); if(!td) return;
+  var f = D.tablero.filter(function(x){ return x.i===td.dataset.e; })[0];
+  tb.querySelectorAll("tr").forEach(function(r){
+    r.classList.toggle("act", r.dataset.e===f.i); });
+  var t = td.dataset.t, h = "", cuerpo = "";
+  if(t==="nota" || t==="falta"){
+    var e = D.evals.filter(function(x){ return x.n===td.dataset.ev; })[0];
+    var n = f.notas[e.n];
+    h = esc(f.nom)+" · "+esc(e.nom);
+    cuerpo = n
+      ? "<span class='mono'>"+esc(n.i)+" : Calificacion</span> · nota = "+
+        esc(n.nota)+" · fecha = "+esc(n.f)+" · firma <span class='mono'>"+
+        esc(n.firma)+"</span> · fuente <span class='mono'>"+esc(n.fuente)+
+        "</span>"
+      : "No existe ninguna instancia de Calificacion para este estudiante y "+
+        "esta evaluación. La multiplicidad <span class='k'>0..*</span> lo "+
+        "permite.";
+  } else if(t==="grupal"){
+    h = esc(f.nom)+" · "+esc(evGrup.nom);
+    cuerpo = f.grupal
+      ? "<span class='mono'>"+esc(f.grupal.i)+" : Calificacion</span> cuelga "+
+        "de <span class='mono'>"+esc(f.grupal.grupo)+
+        " : GrupoDeTrabajo</span>, no de <span class='mono'>"+esc(f.i)+
+        "</span>."
+      : "Sin nota grupal.";
+  } else if(t==="part"){
+    h = esc(f.nom)+" · participaciones";
+    cuerpo = f.parts.length ? f.parts.map(function(x){
+      return "<span class='mono'>"+esc(x.i)+"</span> · "+esc(x.tipo)+" · "+
+        esc(x.f)+" · "+(x.fuente?"fuente <span class='mono'>"+esc(x.fuente)+
+        "</span>":"<span style='color:var(--lapiz)'>sin fuente</span>");
+      }).join("<br>")
+      : "Ninguna instancia de Participacion en todo el periodo.";
+  } else if(t==="int"){
+    h = esc(f.nom)+" · correos y asesorías";
+    cuerpo = f.inters.length ? f.inters.map(function(x){
+      return "<span class='mono'>"+esc(x.i)+"</span> · "+esc(x.tipo)+" · "+
+        esc(x.f)+" · fuente <span class='mono'>"+esc(x.fuente)+"</span>";
+      }).join("<br>")
+      : "Ninguna instancia de Interaccion.";
+  } else {
+    h = esc(f.nom)+" · nota con lo que sí es suyo";
+    cuerpo = Object.keys(f.notas).map(function(k){
+      var e2 = D.evals.filter(function(x){ return x.n===k; })[0];
+      return esc(f.notas[k].nota)+" × "+e2.pct+" %"; }).join(" + ")+
+      ", sobre "+f.cob+" %.";
+  }
+  det.removeAttribute("hidden");
+  det.innerHTML = "<h4>"+h+"</h4><p>"+cuerpo+"</p><p class='ruta'>"+
+    RUTAS[t]+"</p>";
+});
+
+[["<span class='cnt' data-n='3'>0</span> ceros",
+  "Diego Lara: una nota, cero participaciones, cero correos"],
+ ["1 de 1","la única participación de Brian es del foro; de clase no hay nada"],
+ ["<span class='cnt' data-n='35'>0</span> %",
+  "del plan no entra en ninguna línea individual"],
+ ["40 vs 65","los promedios no son comparables, y el tablero lo dice"]
+].forEach(function(c){
+  $("#cifras4").appendChild(el("div","caja cifra-g",
+    "<b>"+c[0]+"</b><p>"+esc(c[1])+"</p>"));
+});
+
+/* ----------------------------------------------------------- 9 · problemas */
+var FAM = [["P1 · P2","Pérdida de evidencia",
+  "Información que se genera, pero no queda asociada a un responsable: "+
+  "participación en clase y calificación de trabajos grupales.",["P1","P2"]],
+ ["P3 · P4","Pérdida de detalle",
+  "La información existe, pero llega incompleta o fragmentada: rúbricas "+
+  "reducidas a un valor numérico y las tres herramientas.",["P3","P4"]],
+ ["P5 · P6 · P7","Consecuencias",
+  "Lo que el profesor siente: no hay capa que integre, no detecta a tiempo, "+
+  "y cada semestre empieza de cero.",["P5","P6","P7"]]];
+FAM.forEach(function(f,i){
+  var c = el("button","caja tarj fam");
+  c.innerHTML = "<b class='ids'>"+esc(f[0])+"</b><h3>"+esc(f[1])+"</h3><p>"+
+    esc(f[2])+"</p>";
+  c.addEventListener("click", function(){
+    var ya = c.getAttribute("aria-pressed")==="true";
+    $("#familias").querySelectorAll(".fam").forEach(function(x){
+      x.setAttribute("aria-pressed","false"); });
+    if(!ya) c.setAttribute("aria-pressed","true");
+    resaltaMx(ya ? [] : f[3]);
+  });
+  $("#familias").appendChild(c);
+});
+var ORD = ["Materia","Estudiante","GrupoDeTrabajo","Evaluacion","Parcial",
+  "TrabajoIndividual","TrabajoGrupal","Rubrica","CriterioRubrica",
+  "Calificacion","Participacion","Interaccion","FuenteInformacion"];
+var mx = $("#mx");
+mx.innerHTML = "<thead><tr><th class='esq'>Qué concepto del metamodelo toca "+
+  "cada problema</th>"+ORD.map(function(c){ return "<th>"+esc(c)+"</th>"; })
+  .join("")+"</tr></thead><tbody>"+D.problemas.map(function(p){
+    return "<tr data-p='"+p.id+"'><td class='lbl'><b>"+p.id+"</b>"+
+      esc(p.t)+"</td>"+ORD.map(function(c){
+        return "<td>"+((D.toca[p.id]||[]).indexOf(c)>=0
+          ? "<div class='pt'></div>" : "")+"</td>"; }).join("")+"</tr>";
+  }).join("")+"</tbody>";
+function resaltaMx(ids){
+  mx.querySelectorAll("tbody tr").forEach(function(r){
+    r.classList.toggle("act", ids.indexOf(r.dataset.p)>=0); });
+}
+
+/* ---------------------------------------------------------- 10 · supuestos */
+var CUATRO = ["S1","S4","S6","S9"];
+function pintaSups(todos){
+  $("#sups").innerHTML = "";
+  D.supuestos.filter(function(a){
+    return todos || CUATRO.indexOf(a.id) >= 0;
+  }).forEach(function(a){
+    $("#sups").appendChild(el("div","caja tarj sup",
+      "<span class='chapa'>"+a.id+"</span><div style='min-width:0'><h3>"+
+      esc(a.t)+"</h3><p><b>Por qué es razonable</b> "+esc(a.raz)+
+      "</p><p class='conse'><b>Si fuera falso</b> "+esc(a.falso)+
+      "</p></div>"));
+  });
+}
+pintaSups(false);
+var btSup = el("button","mas","Ver los nueve");
+btSup.addEventListener("click", function(){
+  var todos = btSup.textContent === "Ver los nueve";
+  pintaSups(todos);
+  btSup.textContent = todos ? "Ver solo los cuatro" : "Ver los nueve";
+});
+$("#sups").parentNode.appendChild(btSup);
+
+/* -------------------------------------------------------- 11 · accionables */
+[["Precondiciones","Sin esto, cualquier integración es una adivinanza",
+  ["A4","A6"],""],
+ ["Datos que faltan","Son los dos datos que la vista necesita y hoy no existen",
+  ["A1","A2"],""],
+ ["Decisiones","No se pueden delegar a quien construya la solución",
+  ["A3","A5"],""],
+ ["Validación","Antes de invertir en construir nada",["A7"],"roja"]
+].forEach(function(g){
+  var fila = el("div","banda");
+  fila.innerHTML = "<div class='banda-r "+g[3]+"'><b>"+esc(g[0])+
+    "</b><span>"+esc(g[1])+"</span></div><div class='banda-c'>"+
+    g[2].map(function(id){
+      var a = D.accionables.filter(function(x){ return x.id===id; })[0];
+      return "<button class='acc'><span class='mono'>"+a.id+"</span>"+
+        esc(a.t)+"<span class='oculto'><b>Decisión que exige.</b> "+
+        esc(a.dec)+" <b>Precondición.</b> "+esc(a.pre)+"</span></button>";
+    }).join("")+"</div>";
+  fila.querySelectorAll(".acc").forEach(function(b){
+    b.addEventListener("click", function(){ b.classList.toggle("abierta"); });
+  });
+  $("#bandas").appendChild(fila);
+});
+
+/* ------------------------------------------------------------- 12 · cierre */
+[["El metamodelo","muestra que las tres existen y que las tres cuelgan del "+
+  "Estudiante: la pregunta es contestable en principio"],
+ ["El modelo","muestra por qué hoy no lo es: una no se registra, otra vive "+
+  "en un buzón, la tercera está partida"],
+ ["La vista","prueba que con los datos que ya existen el tablero se puede "+
+  "armar hoy, con huecos reconocibles en lugar de silencios"]
+].forEach(function(c,i){
+  if(i) $("#cadena").appendChild(el("span","flecha","&rsaquo;"));
+  $("#cadena").appendChild(el("div","eslabon",
+    "<b>"+esc(c[0])+"</b><p>"+esc(c[1])+"</p>"));
+});
+
+/* -------------------------------------------------------- 13 · el reparto */
+var rp = $("#reparto");
+rp.appendChild(el("div","rp cab","<span>Presenta</span><span>Ventana</span>"+
+  "<span>Bloque</span>"));
+[["Andrés Felipe García","00:00 – 05:00","La pregunta, qué decidimos modelar "+
+  "y el metamodelo"],
+ ["David Felipe Laverde","05:00 – 10:00","El lenguaje gráfico, el modelo y el "+
+  "punto de vista"],
+ ["Jose Carlos Salgado","10:00 – 15:00","La vista de consulta, los problemas, "+
+  "los supuestos, los accionables y el cierre"]
+].forEach(function(r){
+  rp.appendChild(el("div","rp","<b>"+esc(r[0])+"</b><span class='vent'>"+
+    esc(r[1])+"</span><p>"+esc(r[2])+"</p>"));
+});
+
+/* ------------------------------------------------------------- el visor */
+var visor=null, vimg=null, z=1, ox=0, oy=0, nw=0, nh=0;
+function abre(src, tit){
+  if(visor) cierra();
+  visor = el("div","visor");
+  visor.innerHTML =
+    "<div class='visor-barra'><b>"+esc(tit)+"</b>"+
+    "<button data-a='menos'>&minus; Zoom</button>"+
+    "<button data-a='mas'>+ Zoom</button>"+
+    "<button data-a='ajusta'>Ajustar</button>"+
+    "<button data-a='uno'>100%</button>"+
+    "<button data-a='cierra'>Cerrar</button></div>"+
+    "<div class='visor-lienzo'><img alt=''></div>"+
+    "<div class='visor-pie'><span id='vz'>100%</span> · arrastre para "+
+    "desplazar · rueda o pellizco para acercar · teclas + &minus; 0 y Esc</div>";
+  document.body.appendChild(visor);
+  document.body.style.overflow = "hidden";
+  var lienzo = visor.querySelector(".visor-lienzo");
+  vimg = visor.querySelector("img");
+  vimg.addEventListener("load", function(){
+    nw = vimg.naturalWidth; nh = vimg.naturalHeight; ajusta(); });
+  vimg.src = src;
+  visor.querySelector(".visor-barra").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    var a = b.dataset.a;
+    if(a==="cierra") cierra();
+    else if(a==="ajusta") ajusta();
+    else if(a==="uno"){ z=1; centra(); }
+    else zoom(a==="mas" ? 1.35 : 1/1.35);
+  });
+  var arr=false, px=0, py=0;
+  lienzo.addEventListener("pointerdown", function(e){
+    arr=true; px=e.clientX; py=e.clientY; lienzo.classList.add("arr");
+    lienzo.setPointerCapture(e.pointerId); });
+  lienzo.addEventListener("pointermove", function(e){
+    if(!arr) return; ox += e.clientX-px; oy += e.clientY-py;
+    px=e.clientX; py=e.clientY; aplica(); });
+  lienzo.addEventListener("pointerup", function(){ arr=false;
+    lienzo.classList.remove("arr"); });
+  lienzo.addEventListener("wheel", function(e){
+    e.preventDefault();
+    var r = lienzo.getBoundingClientRect();
+    var cx = e.clientX-r.left, cy = e.clientY-r.top;
+    var k = e.deltaY<0 ? 1.12 : 1/1.12;
+    var nz = Math.min(8, Math.max(.02, z*k));
+    ox = cx - (cx-ox)*(nz/z); oy = cy - (cy-oy)*(nz/z); z = nz; aplica();
+  }, {passive:false});
+  function ajusta(){
+    var r = lienzo.getBoundingClientRect();
+    if(!nw) return;
+    z = Math.min((r.width-24)/nw, (r.height-24)/nh);
+    ox = (r.width - nw*z)/2; oy = (r.height - nh*z)/2; aplica();
+  }
+  function centra(){
+    var r = lienzo.getBoundingClientRect();
+    ox = (r.width - nw*z)/2; oy = (r.height - nh*z)/2; aplica();
+  }
+  function zoom(k){
+    var r = lienzo.getBoundingClientRect();
+    var cx = r.width/2, cy = r.height/2;
+    var nz = Math.min(8, Math.max(.02, z*k));
+    ox = cx - (cx-ox)*(nz/z); oy = cy - (cy-oy)*(nz/z); z = nz; aplica();
+  }
+  function aplica(){
+    vimg.style.transform = "translate("+ox+"px,"+oy+"px) scale("+z+")";
+    var p = visor.querySelector("#vz");
+    if(p) p.textContent = Math.round(z*100)+"%";
+  }
+  visor._zoom = zoom; visor._ajusta = ajusta; visor._centra = centra;
+}
+function cierra(){
+  if(!visor) return;
+  visor.remove(); visor=null; document.body.style.overflow="";
+}
+document.querySelectorAll(".figbar,.fighero").forEach(function(m){
+  m.addEventListener("click", function(){
+    abre(m.dataset.fig, m.dataset.tit); });
+});
+document.addEventListener("keydown", function(e){
+  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA") return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(visor){
+    if(e.key==="Escape") cierra();
+    else if(e.key==="+"||e.key==="=") visor._zoom(1.35);
+    else if(e.key==="-"||e.key==="_") visor._zoom(1/1.35);
+    else if(e.key==="0") visor._ajusta();
+    e.preventDefault(); return;
+  }
+  if(!indice.hasAttribute("hidden")){
+    if(e.key==="Escape"||e.key==="i"||e.key==="I"){ cierraIdx(); e.preventDefault(); }
+    return;
+  }
+  switch(e.key){
+    case "ArrowRight": case "PageDown": case " ":
+      vaA(act+1,false); e.preventDefault(); break;
+    case "ArrowLeft": case "PageUp":
+      vaA(act-1,true); e.preventDefault(); break;
+    case "Home": vaA(0,true); e.preventDefault(); break;
+    case "End": vaA(TOT-1,false); e.preventDefault(); break;
+    case "i": case "I": abreIdx(); e.preventDefault(); break;
+    case "t": case "T": btTema.click(); break;
+    case "f": case "F": {
+      var m = SL[act].querySelector(".fighero,.figbar");
+      if(m){ abre(m.dataset.fig, m.dataset.tit); e.preventDefault(); }
+      break;
+    }
+  }
+});
+
+/* ------------------------------------------------- arranque: a la portada */
+(function(){
+  var h = (location.hash||"").replace("#","");
+  var i = 0;
+  SL.forEach(function(sec,k){ if(sec.id===h) i=k; });
+  vaA(i, false);
+})();
+})();
+</script>
+
+</body>
+</html>
